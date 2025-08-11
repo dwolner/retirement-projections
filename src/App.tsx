@@ -25,328 +25,192 @@ const formatCurrency = (value: number) => {
 
 // Main App component
 export default function App() {
+  const initialData = {
+    age: 35,
+    startingPortfolio: 740000,
+    netJobIncome: 128771,
+    monthlyInvestment: 11000,
+    portfolioGrowth: 45400,
+    rentalIncome: 133400,
+    spendingNeed: 100000,
+    charitableGiving: 20000,
+    surplusDeficit: 0,
+  };
+
+  const initialAge = initialData.age;
+  const retirementAge = 55; // Assume retirement at age 54
+  const maxAge = 76;
+  const inflationRate = 0.03;
+  const annualGrowthRate = 0.04;
+
   // Define a function to calculate the charitable giving for each year based on the new plan
   const calculateCharitableGiving = (age: number) => {
-    if (age < 35) return 0;
-    if (age <= 55) {
-      // Linear ramp-up: $30,000 at age 35, increasing by $2,000 per year
-      const years = age - 35;
-      return 30000 + years * 2000;
-    }
-    // After age 55, giving stays at the age 55 amount ($70,000)
-    return 70000;
+    if (age < initialAge) return 0;
+    // const yearsOfGrowth = age - initialAge;
+    // const yearsOfGrowth =
+    //   age <= retirementAge ? age - initialAge : retirementAge - initialAge;
+    // const growthRate = 1 + 0.04;
+    // return initialData.charitableGiving * Math.pow(growthRate, yearsOfGrowth);
+
+    // giving should be 10% of income
+    const netJobIncome = calculateNetJobIncome(age);
+    const rentalIncome = calculateRentalIncome(age);
+    const totalIncome = netJobIncome + rentalIncome;
+    const percentage = age < retirementAge ? 0.1 : 0.2; // 10% before retirement, 5% after
+    return totalIncome * percentage;
   };
 
   // Define a function to calculate the net job income with a 3% annual increase
   const calculateNetJobIncome = (age: number) => {
     // Starting net job income at age 35
-    const initialIncome = 128771;
+    const initialIncome = initialData.netJobIncome;
     // 3% annual increase
-    const growthRate = 1.03;
-    if (age < 35) return 0;
-    // Assume retirement at age 56, so no job income from this age onwards
-    if (age >= 56) return 0;
-    const yearsOfGrowth = age - 35;
+    const growthRate = 1 + inflationRate;
+    if (age < initialAge) return 0;
+    // Assume retirement at age 54, so no job income from this age onwards
+    if (age >= retirementAge) return 0;
+    const yearsOfGrowth = age - initialAge;
     return initialIncome * Math.pow(growthRate, yearsOfGrowth);
   };
 
-  const initialData = [
-    {
-      age: 35,
-      startingPortfolio: 908000,
-      netJobIncome: 128771,
-      monthlyInvestments: 132000,
-      portfolioIncome: 45400,
-      rentalIncome: 133400,
-      spendingNeed: 150000,
-    },
-    {
-      age: 36,
-      startingPortfolio: 1197571,
-      netJobIncome: 128771,
-      monthlyInvestments: 132000,
-      portfolioIncome: 59879,
-      rentalIncome: 136735,
-      spendingNeed: 153750,
-    },
-    {
-      age: 37,
-      startingPortfolio: 1481206,
-      netJobIncome: 128771,
-      monthlyInvestments: 132000,
-      portfolioIncome: 74060,
-      rentalIncome: 140154,
-      spendingNeed: 157594,
-    },
-    {
-      age: 38,
-      startingPortfolio: 1758597,
-      netJobIncome: 128771,
-      monthlyInvestments: 132000,
-      portfolioIncome: 87930,
-      rentalIncome: 143658,
-      spendingNeed: 161534,
-    },
-    {
-      age: 39,
-      startingPortfolio: 2030391,
-      netJobIncome: 128771,
-      monthlyInvestments: 132000,
-      portfolioIncome: 101520,
-      rentalIncome: 147250,
-      spendingNeed: 165577,
-    },
-    {
-      age: 40,
-      startingPortfolio: 2296355,
-      netJobIncome: 128771,
-      monthlyInvestments: 132000,
-      portfolioIncome: 114818,
-      rentalIncome: 150931,
-      spendingNeed: 169766,
-    },
-    {
-      age: 41,
-      startingPortfolio: 2558109,
-      netJobIncome: 128771,
-      monthlyInvestments: 132000,
-      portfolioIncome: 127905,
-      rentalIncome: 154704,
-      spendingNeed: 174096,
-    },
-    {
-      age: 42,
-      startingPortfolio: 2814993,
-      netJobIncome: 128771,
-      monthlyInvestments: 132000,
-      portfolioIncome: 140750,
-      rentalIncome: 158572,
-      spendingNeed: 178590,
-    },
-    {
-      age: 43,
-      startingPortfolio: 3067896,
-      netJobIncome: 128771,
-      monthlyInvestments: 132000,
-      portfolioIncome: 153395,
-      rentalIncome: 162536,
-      spendingNeed: 183050,
-    },
-    {
-      age: 44,
-      startingPortfolio: 3321548,
-      netJobIncome: 128771,
-      monthlyInvestments: 132000,
-      portfolioIncome: 166077,
-      rentalIncome: 166600,
-      spendingNeed: 187640,
-    },
-    {
-      age: 45,
-      startingPortfolio: 3577356,
-      netJobIncome: 128771,
-      monthlyInvestments: 132000,
-      portfolioIncome: 178868,
-      rentalIncome: 170765,
-      spendingNeed: 192331,
-    },
-    {
-      age: 46,
-      startingPortfolio: 3837029,
-      netJobIncome: 128771,
-      monthlyInvestments: 132000,
-      portfolioIncome: 191851,
-      rentalIncome: 175034,
-      spendingNeed: 197144,
-    },
-    {
-      age: 47,
-      startingPortfolio: 4100522,
-      netJobIncome: 128771,
-      monthlyInvestments: 132000,
-      portfolioIncome: 204996,
-      rentalIncome: 179409,
-      spendingNeed: 202079,
-    },
-    {
-      age: 48,
-      startingPortfolio: 4367519,
-      netJobIncome: 128771,
-      monthlyInvestments: 132000,
-      portfolioIncome: 218376,
-      rentalIncome: 183894,
-      spendingNeed: 207130,
-    },
-    {
-      age: 49,
-      startingPortfolio: 4639030,
-      netJobIncome: 128771,
-      monthlyInvestments: 132000,
-      portfolioIncome: 231951,
-      rentalIncome: 188492,
-      spendingNeed: 212309,
-    },
-    {
-      age: 50,
-      startingPortfolio: 4914874,
-      netJobIncome: 128771,
-      monthlyInvestments: 132000,
-      portfolioIncome: 245744,
-      rentalIncome: 193204,
-      spendingNeed: 217632,
-    },
-    {
-      age: 51,
-      startingPortfolio: 5195961,
-      netJobIncome: 128771,
-      monthlyInvestments: 132000,
-      portfolioIncome: 259837,
-      rentalIncome: 198034,
-      spendingNeed: 223120,
-    },
-    {
-      age: 52,
-      startingPortfolio: 5483433,
-      netJobIncome: 128771,
-      monthlyInvestments: 132000,
-      portfolioIncome: 274172,
-      rentalIncome: 202985,
-      spendingNeed: 330041,
-    },
-    {
-      age: 53,
-      startingPortfolio: 5731320,
-      netJobIncome: 128771,
-      monthlyInvestments: 132000,
-      portfolioIncome: 286566,
-      rentalIncome: 208060,
-      spendingNeed: 339674,
-    },
-    {
-      age: 54,
-      startingPortfolio: 5987043,
-      netJobIncome: 128771,
-      monthlyInvestments: 132000,
-      portfolioIncome: 299352,
-      rentalIncome: 213261,
-      spendingNeed: 349783,
-    },
-    {
-      age: 55,
-      startingPortfolio: 6250644,
-      netJobIncome: 128771,
-      monthlyInvestments: 132000,
-      portfolioIncome: 312532,
-      rentalIncome: 218593,
-      spendingNeed: 464893,
-    },
-    {
-      age: 56,
-      startingPortfolio: 6437547,
-      netJobIncome: 0,
-      monthlyInvestments: 0,
-      portfolioIncome: 321877,
-      rentalIncome: 224059,
-      spendingNeed: 476815,
-    },
-    {
-      age: 57,
-      startingPortfolio: 6506668,
-      netJobIncome: 0,
-      monthlyInvestments: 0,
-      portfolioIncome: 325333,
-      rentalIncome: 229659,
-      spendingNeed: 395914,
-    },
-    {
-      age: 58,
-      startingPortfolio: 6665746,
-      netJobIncome: 0,
-      monthlyInvestments: 0,
-      portfolioIncome: 333287,
-      rentalIncome: 235400,
-      spendingNeed: 304245,
-    },
-    {
-      age: 59,
-      startingPortfolio: 6930188,
-      netJobIncome: 0,
-      monthlyInvestments: 0,
-      portfolioIncome: 346509,
-      rentalIncome: 241285,
-      spendingNeed: 285846,
-    },
-    {
-      age: 60,
-      startingPortfolio: 7232136,
-      netJobIncome: 0,
-      monthlyInvestments: 0,
-      portfolioIncome: 361607,
-      rentalIncome: 247317,
-      spendingNeed: 292992,
-    },
-    {
-      age: 61,
-      startingPortfolio: 7548068,
-      netJobIncome: 0,
-      monthlyInvestments: 0,
-      portfolioIncome: 377403,
-      rentalIncome: 253500,
-      spendingNeed: 300317,
-    },
-    {
-      age: 62,
-      startingPortfolio: 7878654,
-      netJobIncome: 0,
-      monthlyInvestments: 0,
-      portfolioIncome: 393933,
-      rentalIncome: 259838,
-      spendingNeed: 307825,
-    },
-    {
-      age: 63,
-      startingPortfolio: 8224599,
-      netJobIncome: 0,
-      monthlyInvestments: 0,
-      portfolioIncome: 411230,
-      rentalIncome: 266334,
-      spendingNeed: 315520,
-    },
-    {
-      age: 64,
-      startingPortfolio: 8586643,
-      netJobIncome: 0,
-      monthlyInvestments: 0,
-      portfolioIncome: 429332,
-      rentalIncome: 272992,
-      spendingNeed: 323408,
-    },
-    {
-      age: 65,
-      startingPortfolio: 8965559,
-      netJobIncome: 0,
-      monthlyInvestments: 0,
-      portfolioIncome: 448278,
-      rentalIncome: 279817,
-      spendingNeed: 331495,
-    },
-  ];
+  const calculateRentalIncome = (age: number) => {
+    // Rental income increases by 3% annually
+    const rentalIncome = initialData.rentalIncome;
+    const growthRate = 1 + inflationRate;
+    if (age < initialAge) return rentalIncome;
+    const yearsOfGrowth = age - initialAge;
+    return rentalIncome * Math.pow(growthRate, yearsOfGrowth);
+  };
 
-  const updatedData = initialData.map((row) => {
-    const charitableGiving = calculateCharitableGiving(row.age);
-    const netJobIncome = calculateNetJobIncome(row.age);
-    // Recalculate surplusDeficit to account for charitable giving
-    const totalIncome =
-      netJobIncome +
-      row.monthlyInvestments +
-      row.portfolioIncome +
-      row.rentalIncome;
-    const totalExpenses = row.spendingNeed + charitableGiving;
+  const calculateSpendingNeed = (age: number) => {
+    // Spending need starts at $150,000 at age 35 and increases by 3% annually
+    const initialSpendingNeed = initialData.spendingNeed;
+    const growthRate = 1 + inflationRate;
+    if (age < initialAge) return initialSpendingNeed;
+    const yearsOfGrowth = age - initialAge;
+    let spendingNeed =
+      initialSpendingNeed * Math.pow(growthRate, yearsOfGrowth);
+    //adjust spending need after retirement
+    if (age >= retirementAge) {
+      spendingNeed *= 0.8; // Reduce spending need by 20% after retirement
+    }
+
+    // Adjust spending need for college costs
+    // 1st kid goes to college at age 52, second kid goes to college at 55
+    // add college costs to spending need
+    const collegeCost = 50000; // Assume $50,000 per year for college
+    if (age > 51 && age < 55) {
+      spendingNeed += collegeCost;
+    }
+    if (age > 54 && age < 58) {
+      spendingNeed += collegeCost;
+    }
+    return spendingNeed;
+  };
+
+  const calculateMonthlyInvestment = (age: number) => {
+    const initialInvestment = initialData.monthlyInvestment;
+    const growthRate = 1 + inflationRate;
+    if (age < initialAge) return initialInvestment;
+    if (age >= retirementAge) {
+      // const rentalIncome = calculateRentalIncome(age);
+      // const spendingNeed = calculateSpendingNeed(age);
+      // const charitableGiving = calculateCharitableGiving(age);
+      // return (rentalIncome - spendingNeed - charitableGiving) / 12;
+      return 0;
+    }
+    const yearsOfGrowth = age - initialAge;
+    return initialInvestment * Math.pow(growthRate, yearsOfGrowth);
+  };
+
+  const calculatePortfolioGrowth = (age: number) => {
+    const initialPortfolio = initialData.startingPortfolio;
+    const years = age - initialAge;
+
+    let portfolioValue = initialPortfolio;
+    for (let i = 0; i < years; i++) {
+      if (initialAge + i < retirementAge) {
+        portfolioValue += calculateMonthlyInvestment(initialAge + i) * 12;
+      } else {
+        // const annualDistribution = calculateSpendingNeed(initialAge + i);
+        // portfolioValue -= annualDistribution;
+      }
+      portfolioValue *= 1 + annualGrowthRate;
+    }
+    return portfolioValue;
+  };
+
+  const cummulativeSurplusDeficit = (age: number) => {
+    let total = 0;
+    for (let i = initialAge; i <= age; i++) {
+      total += calculateSurplusDeficit(i).surplusDeficit;
+    }
+    return (
+      <span className={total < 0 ? "text-rose-600" : "text-green-600"}>
+        {formatCurrency(total)}
+      </span>
+    );
+  };
+
+  const calculateSurplusDeficit = (age: number) => {
+    // Calculate total income and expenses
+    const netJobIncome = calculateNetJobIncome(age);
+    const rentalIncome = calculateRentalIncome(age);
+    const charitableGiving = calculateCharitableGiving(age);
+    const spendingNeed = calculateSpendingNeed(age);
+    const startingPortfolio = calculatePortfolioGrowth(age);
+    const portfolioGrowth = startingPortfolio * annualGrowthRate;
+
+    // Total income
+    const totalIncome = netJobIncome + rentalIncome;
+    const investmentExpenses = calculateMonthlyInvestment(age) * 12;
+    // Total expenses
+    const totalExpenses = spendingNeed + charitableGiving + investmentExpenses;
+
+    // Surplus or deficit
     const surplusDeficit = totalIncome - totalExpenses;
-    return { ...row, netJobIncome, charitableGiving, surplusDeficit };
+    return {
+      startingPortfolio,
+      netJobIncome,
+      portfolioGrowth,
+      rentalIncome,
+      totalIncome,
+      investmentExpenses,
+      spendingNeed,
+      charitableGiving,
+      surplusDeficit,
+    };
+  };
+
+  const tableData = Array.from({ length: maxAge - initialAge }, (_, i) => {
+    const age = initialAge + i;
+    const {
+      startingPortfolio,
+      netJobIncome,
+      portfolioGrowth,
+      rentalIncome,
+      totalIncome,
+      investmentExpenses,
+      spendingNeed,
+      charitableGiving,
+      surplusDeficit,
+    } = calculateSurplusDeficit(age);
+    return {
+      age,
+      startingPortfolio,
+      netJobIncome,
+      portfolioGrowth,
+      rentalIncome,
+      totalIncome,
+      investmentExpenses,
+      spendingNeed,
+      charitableGiving,
+      surplusDeficit,
+    };
   });
 
-  const [data, setData] = useState(updatedData);
+  const [data, setData] = useState(tableData);
+
   type SortConfig = {
     key: string | null;
     direction: "ascending" | "descending";
@@ -360,12 +224,44 @@ export default function App() {
     age: number;
     startingPortfolio: number;
     netJobIncome: number;
-    monthlyInvestments: number;
-    portfolioIncome: number;
+    portfolioGrowth: number;
     rentalIncome: number;
+    totalIncome: number;
     spendingNeed: number;
     charitableGiving: number;
+    investmentExpenses: number;
     surplusDeficit: number;
+  };
+
+  // export tableData to csv
+  const exportToCSV = () => {
+    const csvRows = [];
+    type DataRowKey = keyof DataRow;
+    const headers: DataRowKey[] = [
+      "age",
+      "startingPortfolio",
+      "portfolioGrowth",
+      "netJobIncome",
+      "rentalIncome",
+      "totalIncome",
+      "charitableGiving",
+      "spendingNeed",
+      "investmentExpenses",
+      "surplusDeficit",
+    ];
+    csvRows.push(headers.join(","));
+    for (const row of data) {
+      csvRows.push(
+        headers.map((field) => JSON.stringify(row[field])).join(",")
+      );
+    }
+    const csvString = csvRows.join("\n");
+    const blob = new Blob([csvString], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.setAttribute("href", url);
+    a.setAttribute("download", "retirement_projection.csv");
+    a.click();
   };
 
   // Helper function to handle sorting
@@ -521,6 +417,12 @@ export default function App() {
 
         {/* Data Table Section */}
         <div className="bg-white p-6 rounded-xl shadow-lg overflow-x-auto">
+          <button
+            onClick={exportToCSV}
+            className="mb-4 px-4 py-2 bg-blue-600 text-white rounded-md"
+          >
+            Download CSV
+          </button>
           <h3 className="text-lg font-semibold text-center mb-4">
             Detailed Financial Table
           </h3>
@@ -545,18 +447,18 @@ export default function App() {
                 <th
                   scope="col"
                   className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                  onClick={() => sortData("netJobIncome")}
+                  onClick={() => sortData("portfolioGrowth")}
                 >
-                  <div className="flex items-center">Net Job Income</div>
+                  <div className="flex items-center">
+                    Portfolio Growth {getSortIcon("portfolioGrowth")}
+                  </div>
                 </th>
                 <th
                   scope="col"
                   className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                  onClick={() => sortData("portfolioIncome")}
+                  onClick={() => sortData("netJobIncome")}
                 >
-                  <div className="flex items-center">
-                    Portfolio Income {getSortIcon("portfolioIncome")}
-                  </div>
+                  <div className="flex items-center">Net Job Income</div>
                 </th>
                 <th
                   scope="col"
@@ -565,6 +467,15 @@ export default function App() {
                 >
                   <div className="flex items-center">
                     Rental Income {getSortIcon("rentalIncome")}
+                  </div>
+                </th>
+                <th
+                  scope="col"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                  onClick={() => sortData("totalIncome")}
+                >
+                  <div className="flex items-center">
+                    Total Income {getSortIcon("totalIncome")}
                   </div>
                 </th>
                 <th
@@ -588,6 +499,15 @@ export default function App() {
                 <th
                   scope="col"
                   className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                  onClick={() => sortData("investmentExpenses")}
+                >
+                  <div className="flex items-center">
+                    Investment Expenses {getSortIcon("investmentExpenses")}
+                  </div>
+                </th>
+                <th
+                  scope="col"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
                   onClick={() => sortData("surplusDeficit")}
                 >
                   <div className="flex items-center">
@@ -597,34 +517,60 @@ export default function App() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {data.map((row) => (
-                <tr key={row.age}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {row.age}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {formatCurrency(row.startingPortfolio)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {formatCurrency(row.netJobIncome)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {formatCurrency(row.portfolioIncome)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {formatCurrency(row.rentalIncome)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-rose-600 font-semibold">
-                    {formatCurrency(row.charitableGiving)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {formatCurrency(row.spendingNeed)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-green-600 font-semibold">
-                    {formatCurrency(row.surplusDeficit)}
-                  </td>
-                </tr>
-              ))}
+              {data.map((row, index) => {
+                const portfolioDiff =
+                  row.startingPortfolio - data[index - 1]?.startingPortfolio;
+                return (
+                  <tr key={row.age}>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      {row.age}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {formatCurrency(row.startingPortfolio)}
+                      {` `}
+                      {portfolioDiff ? (
+                        <span className="text-green-600 font-semibold">
+                          ({formatCurrency(portfolioDiff)})
+                        </span>
+                      ) : null}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {formatCurrency(row.portfolioGrowth)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {formatCurrency(row.netJobIncome)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {formatCurrency(row.rentalIncome)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {formatCurrency(row.totalIncome)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-rose-600 font-semibold">
+                      {formatCurrency(row.charitableGiving)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {formatCurrency(row.spendingNeed)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {formatCurrency(row.investmentExpenses)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm  font-semibold">
+                      <span
+                        className={
+                          row.surplusDeficit < 0
+                            ? "text-rose-600"
+                            : "text-green-600"
+                        }
+                      >
+                        {formatCurrency(row.surplusDeficit)}
+                        {` `}
+                      </span>
+                      ({cummulativeSurplusDeficit(row.age)})
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
