@@ -1,5 +1,5 @@
 import { ArrowDown, ArrowUp } from "lucide-react";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Bar,
   BarChart,
@@ -25,23 +25,91 @@ const formatCurrency = (value: number) => {
 
 // Main App component
 export default function App() {
-  const initialData = {
-    age: 35,
-    startingPortfolio: 740000,
-    netJobIncome: 128771,
-    monthlyInvestment: 11000,
-    portfolioGrowth: 45400,
-    rentalIncome: 133400,
-    spendingNeed: 100000,
-    charitableGiving: 20000,
-    surplusDeficit: 0,
-  };
+  const [startingPortfolio, setStartingPortfolio] = useState(740000);
+  const [netJobIncome, setNetJobIncome] = useState(128771);
+  const [monthlyInvestment, setMonthlyInvestment] = useState(8000);
+  const [rentalIncome, setRentalIncome] = useState(133400);
+  const [spendingNeed, setSpendingNeed] = useState(130000);
+  const [initialAge, setInitialAge] = useState(36);
+  const [retirementAge, setRetirementAge] = useState(68);
+  const [maxAge, setMaxAge] = useState(92);
+  const [inflationRate, setInflationRate] = useState(0.03);
+  const [annualGrowthRate, setAnnualGrowthRate] = useState(0.05);
 
-  const initialAge = initialData.age;
-  const retirementAge = 55; // Assume retirement at age 54
-  const maxAge = 76;
-  const inflationRate = 0.03;
-  const annualGrowthRate = 0.04;
+  type DataRow = {
+    age: number;
+    startingPortfolio: number;
+    netJobIncome: number;
+    portfolioGrowth: number;
+    rentalIncome: number;
+    totalIncome: number;
+    spendingNeed: number;
+    charitableGiving: number;
+    investmentExpenses: number;
+    surplusDeficit: number;
+  };
+  const [data, setData] = useState<DataRow[]>([]);
+
+  const totalSurplus = data.reduce((acc, curr) => acc + curr.surplusDeficit, 0);
+  const totalCharitableGiving = data.reduce(
+    (acc, curr) => acc + curr.charitableGiving,
+    0
+  );
+  const finalPortfolio = !data.length
+    ? 0
+    : data[data.length - 1].startingPortfolio +
+      data[data.length - 1].surplusDeficit;
+
+  type SortConfig = {
+    key: string | null;
+    direction: "ascending" | "descending";
+  };
+  const [sortConfig, setSortConfig] = useState<SortConfig>({
+    key: null,
+    direction: "ascending",
+  });
+
+  useEffect(() => {
+    setData(
+      Array.from({ length: maxAge - initialAge }, (_, i) => {
+        const age = initialAge + i;
+        const {
+          startingPortfolio,
+          netJobIncome,
+          portfolioGrowth,
+          rentalIncome,
+          totalIncome,
+          investmentExpenses,
+          spendingNeed,
+          charitableGiving,
+          surplusDeficit,
+        } = calculateSurplusDeficit(age);
+        return {
+          age,
+          startingPortfolio,
+          netJobIncome,
+          portfolioGrowth,
+          rentalIncome,
+          totalIncome,
+          investmentExpenses,
+          spendingNeed,
+          charitableGiving,
+          surplusDeficit,
+        };
+      })
+    );
+  }, [
+    startingPortfolio,
+    netJobIncome,
+    monthlyInvestment,
+    rentalIncome,
+    spendingNeed,
+    initialAge,
+    retirementAge,
+    maxAge,
+    inflationRate,
+    annualGrowthRate,
+  ]);
 
   // Define a function to calculate the charitable giving for each year based on the new plan
   const calculateCharitableGiving = (age: number) => {
@@ -50,20 +118,20 @@ export default function App() {
     // const yearsOfGrowth =
     //   age <= retirementAge ? age - initialAge : retirementAge - initialAge;
     // const growthRate = 1 + 0.04;
-    // return initialData.charitableGiving * Math.pow(growthRate, yearsOfGrowth);
+    // return charitableGiving * Math.pow(growthRate, yearsOfGrowth);
 
     // giving should be 10% of income
     const netJobIncome = calculateNetJobIncome(age);
     const rentalIncome = calculateRentalIncome(age);
     const totalIncome = netJobIncome + rentalIncome;
-    const percentage = age < retirementAge ? 0.1 : 0.2; // 10% before retirement, 5% after
+    const percentage = age < retirementAge ? 0.1 : 0.2;
     return totalIncome * percentage;
   };
 
   // Define a function to calculate the net job income with a 3% annual increase
   const calculateNetJobIncome = (age: number) => {
     // Starting net job income at age 35
-    const initialIncome = initialData.netJobIncome;
+    const initialIncome = netJobIncome;
     // 3% annual increase
     const growthRate = 1 + inflationRate;
     if (age < initialAge) return 0;
@@ -75,7 +143,6 @@ export default function App() {
 
   const calculateRentalIncome = (age: number) => {
     // Rental income increases by 3% annually
-    const rentalIncome = initialData.rentalIncome;
     const growthRate = 1 + inflationRate;
     if (age < initialAge) return rentalIncome;
     const yearsOfGrowth = age - initialAge;
@@ -84,15 +151,13 @@ export default function App() {
 
   const calculateSpendingNeed = (age: number) => {
     // Spending need starts at $150,000 at age 35 and increases by 3% annually
-    const initialSpendingNeed = initialData.spendingNeed;
     const growthRate = 1 + inflationRate;
-    if (age < initialAge) return initialSpendingNeed;
+    if (age < initialAge) return spendingNeed;
     const yearsOfGrowth = age - initialAge;
-    let spendingNeed =
-      initialSpendingNeed * Math.pow(growthRate, yearsOfGrowth);
+    let newSpendingNeed = spendingNeed * Math.pow(growthRate, yearsOfGrowth);
     //adjust spending need after retirement
     if (age >= retirementAge) {
-      spendingNeed *= 0.8; // Reduce spending need by 20% after retirement
+      newSpendingNeed *= 0.8; // Reduce spending need by 20% after retirement
     }
 
     // Adjust spending need for college costs
@@ -100,16 +165,16 @@ export default function App() {
     // add college costs to spending need
     const collegeCost = 50000; // Assume $50,000 per year for college
     if (age > 51 && age < 55) {
-      spendingNeed += collegeCost;
+      newSpendingNeed += collegeCost;
     }
     if (age > 54 && age < 58) {
-      spendingNeed += collegeCost;
+      newSpendingNeed += collegeCost;
     }
-    return spendingNeed;
+    return newSpendingNeed;
   };
 
   const calculateMonthlyInvestment = (age: number) => {
-    const initialInvestment = initialData.monthlyInvestment;
+    const initialInvestment = monthlyInvestment;
     const growthRate = 1 + inflationRate;
     if (age < initialAge) return initialInvestment;
     if (age >= retirementAge) {
@@ -124,7 +189,7 @@ export default function App() {
   };
 
   const calculatePortfolioGrowth = (age: number) => {
-    const initialPortfolio = initialData.startingPortfolio;
+    const initialPortfolio = startingPortfolio;
     const years = age - initialAge;
 
     let portfolioValue = initialPortfolio;
@@ -180,57 +245,6 @@ export default function App() {
       charitableGiving,
       surplusDeficit,
     };
-  };
-
-  const tableData = Array.from({ length: maxAge - initialAge }, (_, i) => {
-    const age = initialAge + i;
-    const {
-      startingPortfolio,
-      netJobIncome,
-      portfolioGrowth,
-      rentalIncome,
-      totalIncome,
-      investmentExpenses,
-      spendingNeed,
-      charitableGiving,
-      surplusDeficit,
-    } = calculateSurplusDeficit(age);
-    return {
-      age,
-      startingPortfolio,
-      netJobIncome,
-      portfolioGrowth,
-      rentalIncome,
-      totalIncome,
-      investmentExpenses,
-      spendingNeed,
-      charitableGiving,
-      surplusDeficit,
-    };
-  });
-
-  const [data, setData] = useState(tableData);
-
-  type SortConfig = {
-    key: string | null;
-    direction: "ascending" | "descending";
-  };
-  const [sortConfig, setSortConfig] = useState<SortConfig>({
-    key: null,
-    direction: "ascending",
-  });
-
-  type DataRow = {
-    age: number;
-    startingPortfolio: number;
-    netJobIncome: number;
-    portfolioGrowth: number;
-    rentalIncome: number;
-    totalIncome: number;
-    spendingNeed: number;
-    charitableGiving: number;
-    investmentExpenses: number;
-    surplusDeficit: number;
   };
 
   // export tableData to csv
@@ -298,26 +312,124 @@ export default function App() {
 
   // Dashboard component
   const Dashboard = () => {
-    const totalSurplus = data.reduce(
-      (acc, curr) => acc + curr.surplusDeficit,
-      0
-    );
-    const totalCharitableGiving = data.reduce(
-      (acc, curr) => acc + curr.charitableGiving,
-      0
-    );
-    const finalPortfolio =
-      data[data.length - 1].startingPortfolio +
-      data[data.length - 1].surplusDeficit;
-
     return (
       <div className="p-4 sm:p-8 bg-slate-50 min-h-screen text-slate-800 font-sans">
         <h1 className="text-3xl sm:text-4xl font-bold mb-2 text-center text-slate-900">
           Retirement Projection Dashboard
         </h1>
         <p className="text-center text-slate-600 mb-8">
-          A visual breakdown of your financial plan from age 35 to 65.
+          A visual breakdown of your financial plan from age {initialAge} to{" "}
+          {maxAge}.
         </p>
+
+        <div className="flex flex-wrap gap-4 justify-center mb-8">
+          <div>
+            <label className="block text-xs text-gray-600">
+              Starting Portfolio
+            </label>
+            <input
+              type="number"
+              className="border-gray-200 border rounded px-2 py-1 bg-white w-full shadow-md"
+              value={startingPortfolio}
+              onChange={(e) => setStartingPortfolio(Number(e.target.value))}
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-gray-600">
+              Net Job Income
+            </label>
+            <input
+              type="number"
+              className="border-gray-200 border rounded px-2 py-1 bg-white w-full shadow-md"
+              value={netJobIncome}
+              onChange={(e) => setNetJobIncome(Number(e.target.value))}
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-gray-600">
+              Monthly Investment
+            </label>
+            <input
+              type="number"
+              step="100"
+              className="border-gray-200 border rounded px-2 py-1 bg-white w-full shadow-md"
+              value={monthlyInvestment}
+              onChange={(e) => setMonthlyInvestment(Number(e.target.value))}
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-gray-600">Rental Income</label>
+            <input
+              type="number"
+              className="border-gray-200 border rounded px-2 py-1 bg-white w-full shadow-md"
+              value={rentalIncome}
+              onChange={(e) => setRentalIncome(Number(e.target.value))}
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-gray-600">Spending Need</label>
+            <input
+              type="number"
+              step="1000"
+              className="border-gray-200 border rounded px-2 py-1 bg-white w-full shadow-md"
+              value={spendingNeed}
+              onChange={(e) => setSpendingNeed(Number(e.target.value))}
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-gray-600">Initial Age</label>
+            <input
+              type="number"
+              className="border-gray-200 border rounded px-2 py-1 bg-white w-full shadow-md"
+              value={initialAge}
+              onChange={(e) => setInitialAge(Number(e.target.value))}
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-gray-600">
+              Retirement Age
+            </label>
+            <input
+              type="number"
+              className="border-gray-200 border rounded px-2 py-1 bg-white w-full shadow-md"
+              value={retirementAge}
+              onChange={(e) => setRetirementAge(Number(e.target.value))}
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-gray-600">Max Age</label>
+            <input
+              type="number"
+              className="border-gray-200 border rounded px-2 py-1 bg-white w-full shadow-md"
+              value={maxAge}
+              onChange={(e) => setMaxAge(Number(e.target.value))}
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-gray-600">
+              Inflation Rate
+            </label>
+            <input
+              type="number"
+              step="0.01"
+              className="border-gray-200 border rounded px-2 py-1 bg-white w-full shadow-md"
+              value={inflationRate}
+              onChange={(e) => setInflationRate(Number(e.target.value))}
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-gray-600">
+              Annual Growth Rate
+            </label>
+            <input
+              type="number"
+              step="0.01"
+              className="border-gray-200 border rounded px-2 py-1 bg-white w-full shadow-md"
+              value={annualGrowthRate}
+              onChange={(e) => setAnnualGrowthRate(Number(e.target.value))}
+            />
+          </div>
+        </div>
 
         {/* Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
@@ -342,7 +454,7 @@ export default function App() {
               Average Annual Surplus
             </h3>
             <p className="text-3xl font-bold text-green-600">
-              {formatCurrency(totalSurplus / 31)}
+              {formatCurrency(totalSurplus / (maxAge - initialAge))}
             </p>
           </div>
           <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-rose-500">
