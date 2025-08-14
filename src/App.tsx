@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 import {
   ArrowDown,
   ArrowUp,
@@ -172,52 +171,6 @@ export default function App() {
     direction: "ascending",
   });
 
-  useEffect(() => {
-    // Persist values to localStorage on change
-    setLocalStorageValue("startingPortfolio", startingPortfolio);
-    setLocalStorageValue("netJobIncome", netJobIncome);
-    setLocalStorageValue("monthlyInvestment", monthlyInvestment);
-    setLocalStorageValue("passiveIncome", passiveIncome);
-    setLocalStorageValue("spendingNeed", spendingNeed);
-    setLocalStorageValue("initialAge", initialAge);
-    setLocalStorageValue("retirementAge", retirementAge);
-    setLocalStorageValue("maxAge", maxAge);
-    setLocalStorageValue("inflationRate", inflationRate);
-    setLocalStorageValue("annualGrowthRate", annualGrowthRate);
-    setLocalStorageValue("charitableGivingEnabled", charitableGivingEnabled);
-    setLocalStorageValue("collegeCostsEnabled", collegeCostsEnabled);
-    setLocalStorageValue("collegeCost", collegeCost);
-    setLocalStorageValue("collegeStartAge", collegeStartAge);
-    setLocalStorageValue("collegeEndAge", collegeEndAge);
-    setLocalStorageValue("collegeDuration", collegeDuration);
-
-    setData(
-      Array.from({ length: maxAge - initialAge }, (_, i) => {
-        const age = initialAge + i;
-        const currentYear = new Date().getFullYear();
-        const year = currentYear + i;
-        return { year, age, ...calculateSurplusDeficit(age) };
-      })
-    );
-  }, [
-    startingPortfolio,
-    netJobIncome,
-    monthlyInvestment,
-    passiveIncome,
-    spendingNeed,
-    initialAge,
-    retirementAge,
-    maxAge,
-    inflationRate,
-    annualGrowthRate,
-    charitableGivingEnabled,
-    collegeCostsEnabled,
-    collegeCost,
-    collegeStartAge,
-    collegeEndAge,
-    collegeDuration,
-  ]);
-
   // Define a function to calculate the charitable giving for each year based on the new plan
   const calculateCharitableGiving = (age: number) => {
     if (!charitableGivingEnabled) return 0;
@@ -364,6 +317,53 @@ export default function App() {
       surplusDeficit,
     };
   };
+
+  useEffect(() => {
+    // Persist values to localStorage on change
+    setLocalStorageValue("startingPortfolio", startingPortfolio);
+    setLocalStorageValue("netJobIncome", netJobIncome);
+    setLocalStorageValue("monthlyInvestment", monthlyInvestment);
+    setLocalStorageValue("passiveIncome", passiveIncome);
+    setLocalStorageValue("spendingNeed", spendingNeed);
+    setLocalStorageValue("initialAge", initialAge);
+    setLocalStorageValue("retirementAge", retirementAge);
+    setLocalStorageValue("maxAge", maxAge);
+    setLocalStorageValue("inflationRate", inflationRate);
+    setLocalStorageValue("annualGrowthRate", annualGrowthRate);
+    setLocalStorageValue("charitableGivingEnabled", charitableGivingEnabled);
+    setLocalStorageValue("collegeCostsEnabled", collegeCostsEnabled);
+    setLocalStorageValue("collegeCost", collegeCost);
+    setLocalStorageValue("collegeStartAge", collegeStartAge);
+    setLocalStorageValue("collegeEndAge", collegeEndAge);
+    setLocalStorageValue("collegeDuration", collegeDuration);
+
+    setData(
+      Array.from({ length: maxAge - initialAge }, (_, i) => {
+        const age = initialAge + i;
+        const currentYear = new Date().getFullYear();
+        const year = currentYear + i;
+        return { year, age, ...calculateSurplusDeficit(age) };
+      })
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    startingPortfolio,
+    netJobIncome,
+    monthlyInvestment,
+    passiveIncome,
+    spendingNeed,
+    initialAge,
+    retirementAge,
+    maxAge,
+    inflationRate,
+    annualGrowthRate,
+    charitableGivingEnabled,
+    collegeCostsEnabled,
+    collegeCost,
+    collegeStartAge,
+    collegeEndAge,
+    collegeDuration,
+  ]);
 
   // export tableData to csv
   const exportToCSV = () => {
