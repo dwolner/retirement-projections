@@ -14,7 +14,8 @@ import {
   YAxis,
 } from "recharts";
 import { Card } from "./Card";
-import { DebouncedInput } from "./DebouncedInput";
+import { Sidebar } from "./Sidebar";
+import { FinancialProvider } from "./FinancialContext";
 
 // Helper function to format numbers as currency
 const formatCurrency = (value: number) => {
@@ -38,6 +39,15 @@ export default function App() {
     }
     return false;
   });
+  
+  // Sidebar collapsed state with localStorage persistence
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("sidebarCollapsed");
+      if (stored !== null) return stored === "true";
+    }
+    return false;
+  });
 
   // Set html class and persist to localStorage
   useEffect(() => {
@@ -48,6 +58,12 @@ export default function App() {
     }
     localStorage.setItem("darkMode", String(darkMode));
   }, [darkMode]);
+  
+  // Persist sidebar collapsed state to localStorage
+  useEffect(() => {
+    localStorage.setItem("sidebarCollapsed", String(sidebarCollapsed));
+  }, [sidebarCollapsed]);
+
   // Load initial values from localStorage or use defaults
   const getInitialValue = <T,>(key: string, defaultValue: T): T => {
     const stored = localStorage.getItem(key);
@@ -411,501 +427,404 @@ export default function App() {
 
   // Dashboard component
   const Dashboard = () => {
+    // Create the financial context value object
+    const financialContextValue = {
+      startingPortfolio,
+      setStartingPortfolio,
+      netJobIncome,
+      setNetJobIncome,
+      monthlyInvestment,
+      setMonthlyInvestment,
+      passiveIncome,
+      setPassiveIncome,
+      spendingNeed,
+      setSpendingNeed,
+      initialAge,
+      setInitialAge,
+      retirementAge,
+      setRetirementAge,
+      maxAge,
+      setMaxAge,
+      inflationRate,
+      setInflationRate,
+      annualGrowthRate,
+      setAnnualGrowthRate,
+      charitableGivingEnabled,
+      setCharitableGivingEnabled,
+      collegeCostsEnabled,
+      setCollegeCostsEnabled,
+      numKids,
+      setNumKids,
+      collegeCost,
+      setCollegeCost,
+      collegeStartAge,
+      setCollegeStartAge,
+      collegeEndAge,
+      setCollegeEndAge,
+      collegeDuration,
+      setCollegeDuration,
+      darkMode,
+      setDarkMode,
+      sidebarCollapsed,
+      setSidebarCollapsed,
+    };
+
     return (
-      <div className="p-4 sm:p-8 min-h-screen font-sans bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100">
-        <div className="flex justify-end mb-4">
-          <button
-            className="px-3 py-1 rounded border transition bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-100 border-slate-300 dark:border-slate-600 hover:bg-slate-300 dark:hover:bg-slate-800"
-            onClick={() => setDarkMode((d) => !d)}
-            aria-label="Toggle dark mode"
-          >
-            <span className="hidden dark:inline">☀️ Light Mode</span>
-            <span className="inline dark:hidden">🌙 Dark Mode</span>
-          </button>
-        </div>
+      <div className="min-h-screen font-sans bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100">
+        {/* Wrap the entire dashboard with FinancialProvider */}
+        <FinancialProvider value={financialContextValue}>
+          {/* Sidebar for inputs - no props needed */}
+          <Sidebar />
 
-        <div className={"mb-8 space-y-2"}>
-          <h1 className="text-3xl sm:text-4xl font-bold text-center text-slate-900 dark:text-slate-100">
-            Retirement Projection Dashboard
-          </h1>
-          <p className="text-center text-slate-600 dark:text-slate-300">
-            A visual breakdown of your financial plan from age {initialAge} to{" "}
-            {maxAge}.
-          </p>
-          <div className="text-xs text-gray-500 dark:text-gray-400 text-center">
-            A couple of assumptions are made in this model:
-            <ul>
-              <li>All values are adjusted for inflation.</li>
-              <li>Investment returns are compounded annually.</li>
-              <li>Taxes and fees are not considered.</li>
-              <li>Reduced expenses by 20% after retirement.</li>
-              <li>No more portfolio contributions after retirement age.</li>
-              <li>
-                Charitable giving is 10% of income until retirement, then 20% of
-                income.
-              </li>
-              <li>
-                College costs are evenly distributed across the college years
-                for all kids.
-              </li>
-            </ul>
-          </div>
-        </div>
-
-        <div className="flex flex-col mb-8 space-y-4 justify-center items-center">
-          <h6>Starting Values</h6>
-          <div className="flex flex-wrap gap-4 items-center justify-center">
-            <DebouncedInput
-              label="Portfolio Value ($)"
-              value={startingPortfolio}
-              onChange={setStartingPortfolio}
-              min={0}
-              step={1000}
-            />
-            <DebouncedInput
-              label="Annual Net Job Income ($)"
-              value={netJobIncome}
-              onChange={setNetJobIncome}
-              min={0}
-              step={1000}
-            />
-            <DebouncedInput
-              label="Portfolio Investment / Mo ($)"
-              value={monthlyInvestment}
-              onChange={setMonthlyInvestment}
-              min={0}
-              step={100}
-            />
-            <DebouncedInput
-              label="Passive Income ($)"
-              value={passiveIncome}
-              onChange={setPassiveIncome}
-              min={0}
-              step={1000}
-            />
-            <DebouncedInput
-              label="Annual Expenses ($)"
-              value={spendingNeed}
-              onChange={setSpendingNeed}
-              min={0}
-              step={1000}
-            />
-          </div>
-          <div className="flex flex-wrap gap-4 items-center justify-center">
-            <DebouncedInput
-              label="Current Age"
-              value={initialAge}
-              onChange={setInitialAge}
-              min={0}
-              step={1}
-            />
-            <DebouncedInput
-              label="Target Retirement Age"
-              value={retirementAge}
-              onChange={setRetirementAge}
-              min={0}
-              step={1}
-            />
-            <DebouncedInput
-              label="Max Age"
-              value={maxAge}
-              onChange={setMaxAge}
-              min={0}
-              step={1}
-            />
-            <DebouncedInput
-              label="Inflation Rate (%)"
-              value={inflationRate}
-              onChange={setInflationRate}
-              min={0}
-              step={0.01}
-            />
-            <DebouncedInput
-              label="Annual Growth Rate (%)"
-              value={annualGrowthRate}
-              onChange={setAnnualGrowthRate}
-              min={0}
-              step={0.01}
-            />
-          </div>
-          <div className="flex flex-wrap gap-4 items-center justify-center">
-            <div className="flex items-center h-full">
-              <label
-                className="text-xs text-gray-600 mr-2"
-                htmlFor="toggle-charitable-giving"
-              >
-                Charitable Giving
-              </label>
-              <input
-                id="toggle-charitable-giving"
-                type="checkbox"
-                checked={charitableGivingEnabled}
-                onChange={(e) => setCharitableGivingEnabled(e.target.checked)}
-                className="accent-indigo-500 w-4 h-4"
-              />
+          {/* Main content area with padding to account for sidebar */}
+          <div className={`p-4 sm:p-8 transition-all duration-300 ${sidebarCollapsed ? 'ml-12' : 'ml-0 md:ml-80'}`}>
+            <div className="mb-8 space-y-2">
+              <h1 className="text-3xl sm:text-4xl font-bold text-center text-slate-900 dark:text-slate-100">
+                Retirement Projection Dashboard
+              </h1>
+              <p className="text-center text-slate-600 dark:text-slate-300">
+                A visual breakdown of your financial plan from age {initialAge}{" "}
+                to {maxAge}.
+              </p>
+              <div className="text-xs text-gray-500 dark:text-gray-400 text-center">
+                A couple of assumptions are made in this model:
+                <ul>
+                  <li>All values are adjusted for inflation.</li>
+                  <li>Investment returns are compounded annually.</li>
+                  <li>Taxes and fees are not considered.</li>
+                  <li>Reduced expenses by 20% after retirement.</li>
+                  <li>No more portfolio contributions after retirement age.</li>
+                  <li>
+                    Charitable giving is 10% of income until retirement, then
+                    20% of income.
+                  </li>
+                  <li>
+                    College costs are evenly distributed across the college
+                    years for all kids.
+                  </li>
+                </ul>
+              </div>
             </div>
-            <div className="flex items-center h-full">
-              <label
-                className="text-xs text-gray-600 mr-2"
-                htmlFor="toggle-college-costs"
-              >
-                College Costs
-              </label>
-              <input
-                id="toggle-college-costs"
-                type="checkbox"
-                checked={collegeCostsEnabled}
-                onChange={(e) => setCollegeCostsEnabled(e.target.checked)}
-                className="accent-indigo-500 w-4 h-4"
-              />
+
+            {/* Summary Cards */}
+            <div
+              className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12`}
+            >
+              <Card borderClassName="border-l-4 border-indigo-500">
+                <h3
+                  className={`text-lg font-semibold mb-2 dark:text-slate-200 text-slate-600`}
+                >
+                  Lifetime Surplus (31 years)
+                </h3>
+                <p
+                  className={`text-3xl font-bold dark:text-green-400 text-green-600`}
+                >
+                  {formatCurrency(lifetimeSurplus)}
+                </p>
+              </Card>
+              <Card borderClassName="border-l-4 border-teal-500">
+                <h3
+                  className={`text-lg font-semibold mb-2 dark:text-slate-200 text-slate-600`}
+                >
+                  Average Annual Surplus
+                </h3>
+                <p
+                  className={`text-3xl font-bold dark:text-green-400 text-green-600`}
+                >
+                  {formatCurrency(lifetimeSurplus / (maxAge - initialAge))}
+                </p>
+              </Card>
+              <Card borderClassName="border-l-4 border-purple-500">
+                <h3
+                  className={`text-lg font-semibold mb-2 dark:text-slate-200 text-slate-600`}
+                >
+                  Final Portfolio (Age {maxAge})
+                </h3>
+                <p className="text-3xl font-bold text-slate-800 dark:text-slate-100">
+                  {formatCurrency(finalPortfolio)}
+                </p>
+              </Card>
+              <Card borderClassName="border-l-4 border-rose-500">
+                <h3
+                  className={`text-lg font-semibold mb-2 dark:text-slate-200 text-slate-600`}
+                >
+                  Lifetime Charitable Giving
+                </h3>
+                <p className="text-3xl font-bold dark:text-rose-400 text-rose-600">
+                  {formatCurrency(lifetimeCharitableGiving)}
+                </p>
+              </Card>
             </div>
-            {collegeCostsEnabled && (
-              <>
-                <DebouncedInput
-                  label="# of Kids (for college)"
-                  value={numKids}
-                  onChange={setNumKids}
-                  min={0}
-                  step={1}
-                />
-                <DebouncedInput
-                  label="College Cost per Kid/Year ($)"
-                  value={collegeCost}
-                  onChange={setCollegeCost}
-                  min={0}
-                  step={1000}
-                />
-                <DebouncedInput
-                  label="College Start Age (oldest)"
-                  value={collegeStartAge}
-                  onChange={setCollegeStartAge}
-                  min={0}
-                  step={1}
-                />
-                <DebouncedInput
-                  label="College End Age (youngest)"
-                  value={collegeEndAge}
-                  onChange={setCollegeEndAge}
-                  min={collegeStartAge}
-                  step={1}
-                />
-                <DebouncedInput
-                  label="College Duration (years)"
-                  value={collegeDuration}
-                  onChange={setCollegeDuration}
-                  min={1}
-                  step={1}
-                />
-              </>
-            )}
-          </div>
-        </div>
 
-        {/* Summary Cards */}
-        <div
-          className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12`}
-        >
-          <Card borderClassName="border-l-4 border-indigo-500">
-            <h3
-              className={`text-lg font-semibold mb-2 dark:text-slate-200 text-slate-600`}
-            >
-              Lifetime Surplus (31 years)
-            </h3>
-            <p
-              className={`text-3xl font-bold dark:text-green-400 text-green-600`}
-            >
-              {formatCurrency(lifetimeSurplus)}
-            </p>
-          </Card>
-          <Card borderClassName="border-l-4 border-teal-500">
-            <h3
-              className={`text-lg font-semibold mb-2 dark:text-slate-200 text-slate-600`}
-            >
-              Average Annual Surplus
-            </h3>
-            <p
-              className={`text-3xl font-bold dark:text-green-400 text-green-600`}
-            >
-              {formatCurrency(lifetimeSurplus / (maxAge - initialAge))}
-            </p>
-          </Card>
-          <Card borderClassName="border-l-4 border-purple-500">
-            <h3
-              className={`text-lg font-semibold mb-2 dark:text-slate-200 text-slate-600`}
-            >
-              Final Portfolio (Age {maxAge})
-            </h3>
-            <p className="text-3xl font-bold text-slate-800 dark:text-slate-100">
-              {formatCurrency(finalPortfolio)}
-            </p>
-          </Card>
-          <Card borderClassName="border-l-4 border-rose-500">
-            <h3
-              className={`text-lg font-semibold mb-2 dark:text-slate-200 text-slate-600`}
-            >
-              Lifetime Charitable Giving
-            </h3>
-            <p className="text-3xl font-bold dark:text-rose-400 text-rose-600">
-              {formatCurrency(lifetimeCharitableGiving)}
-            </p>
-          </Card>
-        </div>
+            {/* Charts Section */}
+            <div className={`grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12`}>
+              {/* Portfolio Growth Chart */}
+              <Card>
+                <h3 className="text-lg font-semibold text-center mb-4">
+                  Portfolio Growth
+                </h3>
+                <ResponsiveContainer width="100%" height={300}>
+                  <LineChart
+                    data={data}
+                    margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="age" />
+                    <YAxis
+                      tickFormatter={(value) =>
+                        `$${(value / 1000000).toFixed(1)}M`
+                      }
+                    />
+                    <Tooltip
+                      formatter={(value) => formatCurrency(value as number)}
+                      contentStyle={
+                        darkMode
+                          ? {
+                              backgroundColor: "#1e293b", // slate-800
+                              border: "1px solid #334155", // slate-700
+                              color: "#f1f5f9", // slate-100
+                            }
+                          : undefined
+                      }
+                      labelStyle={darkMode ? { color: "#f1f5f9" } : undefined}
+                    />
+                    <Legend />
+                    <Line
+                      type="monotone"
+                      dataKey="startingPortfolio"
+                      stroke="#8884d8"
+                      name="Starting Portfolio"
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </Card>
 
-        {/* Charts Section */}
-        <div className={`grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12`}>
-          {/* Portfolio Growth Chart */}
-          <Card>
-            <h3 className="text-lg font-semibold text-center mb-4">
-              Portfolio Growth
-            </h3>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart
-                data={data}
-                margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+              {/* Surplus/Deficit Chart */}
+              <Card>
+                <h3 className="text-lg font-semibold text-center mb-4">
+                  Annual Surplus / Deficit
+                </h3>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart
+                    data={data}
+                    margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="age" />
+                    <YAxis
+                      tickFormatter={(value) =>
+                        `$${(value / 1000).toFixed(0)}K`
+                      }
+                    />
+                    <Tooltip
+                      formatter={(value) => formatCurrency(value as number)}
+                      contentStyle={
+                        darkMode
+                          ? {
+                              backgroundColor: "#1e293b", // slate-800
+                              border: "1px solid #334155", // slate-700
+                              color: "#f1f5f9", // slate-100
+                            }
+                          : undefined
+                      }
+                      labelStyle={darkMode ? { color: "#f1f5f9" } : undefined}
+                    />
+                    <Legend />
+                    <Bar
+                      dataKey="surplusDeficit"
+                      fill="#10b981"
+                      name="Surplus/Deficit"
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </Card>
+            </div>
+
+            {/* Data Table Section */}
+            <Card>
+              <button
+                onClick={exportToCSV}
+                className="mb-4 px-4 py-2 bg-blue-600 text-white rounded-md"
               >
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="age" />
-                <YAxis
-                  tickFormatter={(value) => `$${(value / 1000000).toFixed(1)}M`}
-                />
-                <Tooltip
-                  formatter={(value) => formatCurrency(value as number)}
-                  contentStyle={
-                    darkMode
-                      ? {
-                          backgroundColor: "#1e293b", // slate-800
-                          border: "1px solid #334155", // slate-700
-                          color: "#f1f5f9", // slate-100
-                        }
-                      : undefined
-                  }
-                  labelStyle={darkMode ? { color: "#f1f5f9" } : undefined}
-                />
-                <Legend />
-                <Line
-                  type="monotone"
-                  dataKey="startingPortfolio"
-                  stroke="#8884d8"
-                  name="Starting Portfolio"
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </Card>
+                Download CSV
+              </button>
+              <h3 className="text-lg font-semibold text-center mb-4">
+                Detailed Financial Table
+              </h3>
+              <div className="overflow-x-auto">
+                {/* Data-driven table columns/rows */}
+                {(() => {
+                  type Column = {
+                    label: string;
+                    key: keyof DataRow;
+                    className: (row: DataRow, index: number) => string;
+                    headerClass: string;
+                    sortable: boolean;
+                    render?: (row: DataRow, index: number) => React.ReactNode;
+                  };
 
-          {/* Surplus/Deficit Chart */}
-          <Card>
-            <h3 className="text-lg font-semibold text-center mb-4">
-              Annual Surplus / Deficit
-            </h3>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart
-                data={data}
-                margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="age" />
-                <YAxis
-                  tickFormatter={(value) => `$${(value / 1000).toFixed(0)}K`}
-                />
-                <Tooltip
-                  formatter={(value) => formatCurrency(value as number)}
-                  contentStyle={
-                    darkMode
-                      ? {
-                          backgroundColor: "#1e293b", // slate-800
-                          border: "1px solid #334155", // slate-700
-                          color: "#f1f5f9", // slate-100
-                        }
-                      : undefined
-                  }
-                  labelStyle={darkMode ? { color: "#f1f5f9" } : undefined}
-                />
-                <Legend />
-                <Bar
-                  dataKey="surplusDeficit"
-                  fill="#10b981"
-                  name="Surplus/Deficit"
-                />
-              </BarChart>
-            </ResponsiveContainer>
-          </Card>
-        </div>
+                  // Helper for standard currency columns
+                  const standardCurrencyColumn = (
+                    label: string,
+                    key: keyof DataRow,
+                    colorClass?: string
+                  ): Column => ({
+                    label,
+                    key,
+                    className: () =>
+                      `px-6 py-4 whitespace-nowrap text-sm ${
+                        colorClass
+                          ? colorClass.replace("text-", "dark:text-")
+                          : "dark:text-slate-100 text-slate-900"
+                      }`,
+                    headerClass:
+                      "px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100",
+                    sortable: true,
+                    render: (row) => formatCurrency(row[key]),
+                  });
 
-        {/* Data Table Section */}
-        <Card>
-          <button
-            onClick={exportToCSV}
-            className="mb-4 px-4 py-2 bg-blue-600 text-white rounded-md"
-          >
-            Download CSV
-          </button>
-          <h3 className="text-lg font-semibold text-center mb-4">
-            Detailed Financial Table
-          </h3>
-          <div className="overflow-x-auto">
-            {/* Data-driven table columns/rows */}
-            {(() => {
-              type Column = {
-                label: string;
-                key: keyof DataRow;
-                className: (row: DataRow, index: number) => string;
-                headerClass: string;
-                sortable: boolean;
-                render?: (row: DataRow, index: number) => React.ReactNode;
-              };
-
-              // Helper for standard currency columns
-              const standardCurrencyColumn = (
-                label: string,
-                key: keyof DataRow,
-                colorClass?: string
-              ): Column => ({
-                label,
-                key,
-                className: () =>
-                  `px-6 py-4 whitespace-nowrap text-sm ${
-                    colorClass
-                      ? colorClass.replace("text-", "dark:text-")
-                      : "dark:text-slate-100 text-slate-900"
-                  }`,
-                headerClass:
-                  "px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100",
-                sortable: true,
-                render: (row) => formatCurrency(row[key]),
-              });
-
-              const columns: Column[] = [
-                {
-                  label: "Year",
-                  key: "year",
-                  className: () =>
-                    `px-6 py-4 whitespace-nowrap text-sm font-medium dark:text-slate-100 text-gray-900`,
-                  headerClass:
-                    "px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100",
-                  sortable: true,
-                  render: (row) => row.year,
-                },
-                {
-                  label: "Age",
-                  key: "age",
-                  className: () =>
-                    `px-6 py-4 whitespace-nowrap text-sm font-medium dark:text-slate-100 text-gray-900`,
-                  headerClass:
-                    "px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider",
-                  sortable: false,
-                },
-                {
-                  label: "Starting Portfolio",
-                  key: "startingPortfolio",
-                  className: () =>
-                    `px-6 py-4 whitespace-nowrap text-sm font-medium dark:text-gray-300 text-gray-500`,
-                  headerClass:
-                    "px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100",
-                  sortable: true,
-                  render: (row, index) => {
-                    const portfolioDiff =
-                      row.startingPortfolio -
-                      (data[index - 1]?.startingPortfolio ?? 0);
-                    return (
-                      <>
-                        {formatCurrency(row.startingPortfolio)}{" "}
-                        {portfolioDiff ? (
-                          <span
+                  const columns: Column[] = [
+                    {
+                      label: "Year",
+                      key: "year",
+                      className: () =>
+                        `px-6 py-4 whitespace-nowrap text-sm font-medium dark:text-slate-100 text-gray-900`,
+                      headerClass:
+                        "px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100",
+                      sortable: true,
+                      render: (row) => row.year,
+                    },
+                    {
+                      label: "Age",
+                      key: "age",
+                      className: () =>
+                        `px-6 py-4 whitespace-nowrap text-sm font-medium dark:text-slate-100 text-gray-900`,
+                      headerClass:
+                        "px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider",
+                      sortable: false,
+                    },
+                    {
+                      label: "Starting Portfolio",
+                      key: "startingPortfolio",
+                      className: () =>
+                        `px-6 py-4 whitespace-nowrap text-sm font-medium dark:text-gray-300 text-gray-500`,
+                      headerClass:
+                        "px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100",
+                      sortable: true,
+                      render: (row, index) => {
+                        const portfolioDiff =
+                          row.startingPortfolio -
+                          (data[index - 1]?.startingPortfolio ?? 0);
+                        return (
+                          <>
+                            {formatCurrency(row.startingPortfolio)}{" "}
+                            {portfolioDiff ? (
+                              <span
+                                className={
+                                  "dark:text-green-400 text-green-600 font-semibold"
+                                }
+                              >
+                                ({formatCurrency(portfolioDiff)})
+                              </span>
+                            ) : null}
+                          </>
+                        );
+                      },
+                    },
+                    standardCurrencyColumn(
+                      "Portfolio Growth",
+                      "portfolioGrowth"
+                    ),
+                    standardCurrencyColumn("Net Job Income", "netJobIncome"),
+                    standardCurrencyColumn("Passive Income", "passiveIncome"),
+                    standardCurrencyColumn("Total Income", "totalIncome"),
+                    standardCurrencyColumn(
+                      "Charitable Giving",
+                      "charitableGiving",
+                      "dark:text-rose-400 text-rose-600 font-semibold"
+                    ),
+                    standardCurrencyColumn("Spending Need", "spendingNeed"),
+                    standardCurrencyColumn(
+                      "Investment Expenses",
+                      "investmentExpenses"
+                    ),
+                    {
+                      label: "Surplus/Deficit",
+                      key: "surplusDeficit",
+                      className: (row) =>
+                        `px-6 py-4 whitespace-nowrap text-sm font-semibold ` +
+                        (row.surplusDeficit < 0
+                          ? "dark:text-rose-400 text-rose-600"
+                          : "dark:text-green-400 text-green-600"),
+                      headerClass:
+                        "px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100",
+                      sortable: true,
+                      render: (row) => (
+                        <>
+                          {formatCurrency(row.surplusDeficit)} (
+                          {cummulativeSurplusDeficit(row.age)})
+                        </>
+                      ),
+                    },
+                  ];
+                  return (
+                    <table
+                      className={`min-w-full divide-y dark:divide-gray-700 divide-gray-200`}
+                    >
+                      <thead className="dark:bg-slate-900 bg-gray-50">
+                        <tr className={"dark:text-slate-100 text-slate-900"}>
+                          {columns.map((col) => (
+                            <th
+                              key={col.key}
+                              scope="col"
+                              className={col.headerClass}
+                              onClick={
+                                col.sortable
+                                  ? () => sortData(col.key)
+                                  : undefined
+                              }
+                              style={{
+                                cursor: col.sortable ? "pointer" : undefined,
+                              }}
+                            >
+                              <div className="flex items-center">
+                                {col.label}{" "}
+                                {col.sortable && getSortIcon(col.key)}
+                              </div>
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody className="dark:bg-slate-900 bg-white divide-gray-200">
+                        {data.map((row, index) => (
+                          <tr
+                            key={row.age}
                             className={
-                              "dark:text-green-400 text-green-600 font-semibold"
+                              index % 2 === 0
+                                ? "dark:bg-slate-900 bg-white"
+                                : "dark:bg-slate-800 bg-gray-50"
                             }
                           >
-                            ({formatCurrency(portfolioDiff)})
-                          </span>
-                        ) : null}
-                      </>
-                    );
-                  },
-                },
-                standardCurrencyColumn("Portfolio Growth", "portfolioGrowth"),
-                standardCurrencyColumn("Net Job Income", "netJobIncome"),
-                standardCurrencyColumn("Passive Income", "passiveIncome"),
-                standardCurrencyColumn("Total Income", "totalIncome"),
-                standardCurrencyColumn(
-                  "Charitable Giving",
-                  "charitableGiving",
-                  "dark:text-rose-400 text-rose-600 font-semibold"
-                ),
-                standardCurrencyColumn("Spending Need", "spendingNeed"),
-                standardCurrencyColumn(
-                  "Investment Expenses",
-                  "investmentExpenses"
-                ),
-                {
-                  label: "Surplus/Deficit",
-                  key: "surplusDeficit",
-                  className: (row) =>
-                    `px-6 py-4 whitespace-nowrap text-sm font-semibold ` +
-                    (row.surplusDeficit < 0
-                      ? "dark:text-rose-400 text-rose-600"
-                      : "dark:text-green-400 text-green-600"),
-                  headerClass:
-                    "px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100",
-                  sortable: true,
-                  render: (row) => (
-                    <>
-                      {formatCurrency(row.surplusDeficit)} (
-                      {cummulativeSurplusDeficit(row.age)})
-                    </>
-                  ),
-                },
-              ];
-              return (
-                <table
-                  className={`min-w-full divide-y dark:divide-gray-700 divide-gray-200`}
-                >
-                  <thead className="dark:bg-slate-900 bg-gray-50">
-                    <tr className={"dark:text-slate-100 text-slate-900"}>
-                      {columns.map((col) => (
-                        <th
-                          key={col.key}
-                          scope="col"
-                          className={col.headerClass}
-                          onClick={
-                            col.sortable ? () => sortData(col.key) : undefined
-                          }
-                          style={{
-                            cursor: col.sortable ? "pointer" : undefined,
-                          }}
-                        >
-                          <div className="flex items-center">
-                            {col.label} {col.sortable && getSortIcon(col.key)}
-                          </div>
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody className="dark:bg-slate-900 bg-white divide-gray-200">
-                    {data.map((row, index) => (
-                      <tr
-                        key={row.age}
-                        className={
-                          index % 2 === 0
-                            ? "dark:bg-slate-900 bg-white"
-                            : "dark:bg-slate-800 bg-gray-50"
-                        }
-                      >
-                        {columns.map((col) => (
-                          <td
-                            key={col.key}
-                            className={col.className(row, index)}
-                          >
-                            {col.render ? col.render(row, index) : row[col.key]}
-                          </td>
+                            {columns.map((col) => (
+                              <td
+                                key={col.key}
+                                className={col.className(row, index)}
+                              >
+                                {col.render
+                                  ? col.render(row, index)
+                                  : row[col.key]}
+                              </td>
+                            ))}
+                          </tr>
                         ))}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              );
-            })()}
+                      </tbody>
+                    </table>
+                  );
+                })()}
+              </div>
+            </Card>
           </div>
-        </Card>
+        </FinancialProvider>
       </div>
     );
   };
