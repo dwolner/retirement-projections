@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { ArrowDown, ArrowUp } from "lucide-react";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Bar,
   BarChart,
