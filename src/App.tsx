@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { ArrowDown, ArrowUp } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import {
@@ -39,26 +40,30 @@ export default function App() {
     return defaultValue;
   };
 
+  const setLocalStorageValue = <T,>(key: string, value: T) => {
+    localStorage.setItem(key, JSON.stringify(value));
+  };
+
   const [startingPortfolio, setStartingPortfolio] = useState(() =>
-    getInitialValue("startingPortfolio", 740000)
+    getInitialValue("startingPortfolio", 0)
   );
   const [netJobIncome, setNetJobIncome] = useState(() =>
-    getInitialValue("netJobIncome", 128771)
+    getInitialValue("netJobIncome", 0)
   );
   const [monthlyInvestment, setMonthlyInvestment] = useState(() =>
-    getInitialValue("monthlyInvestment", 8000)
+    getInitialValue("monthlyInvestment", 0)
   );
   const [rentalIncome, setRentalIncome] = useState(() =>
-    getInitialValue("rentalIncome", 133400)
+    getInitialValue("rentalIncome", 0)
   );
   const [spendingNeed, setSpendingNeed] = useState(() =>
-    getInitialValue("spendingNeed", 130000)
+    getInitialValue("spendingNeed", 0)
   );
   const [initialAge, setInitialAge] = useState(() =>
-    getInitialValue("initialAge", 36)
+    getInitialValue("initialAge", 18)
   );
   const [retirementAge, setRetirementAge] = useState(() =>
-    getInitialValue("retirementAge", 68)
+    getInitialValue("retirementAge", 67)
   );
   const [maxAge, setMaxAge] = useState(() => getInitialValue("maxAge", 92));
   const [inflationRate, setInflationRate] = useState(() =>
@@ -73,17 +78,17 @@ export default function App() {
 
   // College cost controls
   const [collegeCostsEnabled, setCollegeCostsEnabled] = useState(() =>
-    getInitialValue("collegeCostsEnabled", true)
+    getInitialValue("collegeCostsEnabled", false)
   );
   const [numKids, setNumKids] = useState(() => getInitialValue("numKids", 2));
   const [collegeCost, setCollegeCost] = useState(() =>
     getInitialValue("collegeCost", 50000)
   );
   const [collegeStartAge, setCollegeStartAge] = useState(() =>
-    getInitialValue("collegeStartAge", 52)
+    getInitialValue("collegeStartAge", 0)
   );
   const [collegeEndAge, setCollegeEndAge] = useState(() =>
-    getInitialValue("collegeEndAge", 55)
+    getInitialValue("collegeEndAge", 0)
   );
   const [collegeDuration, setCollegeDuration] = useState(() =>
     getInitialValue("collegeDuration", 4)
@@ -124,61 +129,27 @@ export default function App() {
 
   useEffect(() => {
     // Persist values to localStorage on change
-    localStorage.setItem(
-      "startingPortfolio",
-      JSON.stringify(startingPortfolio)
-    );
-    localStorage.setItem("netJobIncome", JSON.stringify(netJobIncome));
-    localStorage.setItem(
-      "monthlyInvestment",
-      JSON.stringify(monthlyInvestment)
-    );
-    localStorage.setItem("rentalIncome", JSON.stringify(rentalIncome));
-    localStorage.setItem("spendingNeed", JSON.stringify(spendingNeed));
-    localStorage.setItem("initialAge", JSON.stringify(initialAge));
-    localStorage.setItem("retirementAge", JSON.stringify(retirementAge));
-    localStorage.setItem("maxAge", JSON.stringify(maxAge));
-    localStorage.setItem("inflationRate", JSON.stringify(inflationRate));
-    localStorage.setItem("annualGrowthRate", JSON.stringify(annualGrowthRate));
-    localStorage.setItem(
-      "charitableGivingEnabled",
-      JSON.stringify(charitableGivingEnabled)
-    );
-    localStorage.setItem(
-      "collegeCostsEnabled",
-      JSON.stringify(collegeCostsEnabled)
-    );
-    localStorage.setItem("collegeCost", JSON.stringify(collegeCost));
-    localStorage.setItem("collegeStartAge", JSON.stringify(collegeStartAge));
-    localStorage.setItem("collegeEndAge", JSON.stringify(collegeEndAge));
-    localStorage.setItem("collegeDuration", JSON.stringify(collegeDuration));
+    setLocalStorageValue("startingPortfolio", startingPortfolio);
+    setLocalStorageValue("netJobIncome", netJobIncome);
+    setLocalStorageValue("monthlyInvestment", monthlyInvestment);
+    setLocalStorageValue("rentalIncome", rentalIncome);
+    setLocalStorageValue("spendingNeed", spendingNeed);
+    setLocalStorageValue("initialAge", initialAge);
+    setLocalStorageValue("retirementAge", retirementAge);
+    setLocalStorageValue("maxAge", maxAge);
+    setLocalStorageValue("inflationRate", inflationRate);
+    setLocalStorageValue("annualGrowthRate", annualGrowthRate);
+    setLocalStorageValue("charitableGivingEnabled", charitableGivingEnabled);
+    setLocalStorageValue("collegeCostsEnabled", collegeCostsEnabled);
+    setLocalStorageValue("collegeCost", collegeCost);
+    setLocalStorageValue("collegeStartAge", collegeStartAge);
+    setLocalStorageValue("collegeEndAge", collegeEndAge);
+    setLocalStorageValue("collegeDuration", collegeDuration);
 
     setData(
       Array.from({ length: maxAge - initialAge }, (_, i) => {
         const age = initialAge + i;
-        const {
-          startingPortfolio,
-          netJobIncome,
-          portfolioGrowth,
-          rentalIncome,
-          totalIncome,
-          investmentExpenses,
-          spendingNeed,
-          charitableGiving,
-          surplusDeficit,
-        } = calculateSurplusDeficit(age);
-        return {
-          age,
-          startingPortfolio,
-          netJobIncome,
-          portfolioGrowth,
-          rentalIncome,
-          totalIncome,
-          investmentExpenses,
-          spendingNeed,
-          charitableGiving,
-          surplusDeficit,
-        };
+        return { age, ...calculateSurplusDeficit(age) };
       })
     );
   }, [
@@ -422,16 +393,16 @@ export default function App() {
               <li>All values are adjusted for inflation.</li>
               <li>Investment returns are compounded annually.</li>
               <li>Taxes and fees are not considered.</li>
+              <li>Reduced expenses by 20% after retirement.</li>
+              <li>No more portfolio contributions after retirement age.</li>
               <li>
                 Charitable giving is 10% of income until retirement, then 20% of
                 income.
               </li>
-              <li>Reduced expenses by 20% after retirement.</li>
               <li>
                 College costs are evenly distributed across the college years
                 for all kids.
               </li>
-              <li>No more portfolio contributions after retirement age.</li>
             </ul>
           </div>
         </div>
