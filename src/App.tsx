@@ -12,6 +12,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { DebouncedInput } from "./DebouncedInput";
 
 // Helper function to format numbers as currency
 const formatCurrency = (value: number) => {
@@ -25,16 +26,50 @@ const formatCurrency = (value: number) => {
 
 // Main App component
 export default function App() {
-  const [startingPortfolio, setStartingPortfolio] = useState(740000);
-  const [netJobIncome, setNetJobIncome] = useState(128771);
-  const [monthlyInvestment, setMonthlyInvestment] = useState(8000);
-  const [rentalIncome, setRentalIncome] = useState(133400);
-  const [spendingNeed, setSpendingNeed] = useState(130000);
-  const [initialAge, setInitialAge] = useState(36);
-  const [retirementAge, setRetirementAge] = useState(68);
-  const [maxAge, setMaxAge] = useState(92);
-  const [inflationRate, setInflationRate] = useState(0.03);
-  const [annualGrowthRate, setAnnualGrowthRate] = useState(0.05);
+  // Load initial values from localStorage or use defaults
+  const getInitialValue = <T,>(key: string, defaultValue: T): T => {
+    const stored = localStorage.getItem(key);
+    if (stored !== null) {
+      try {
+        return JSON.parse(stored);
+      } catch {
+        return defaultValue;
+      }
+    }
+    return defaultValue;
+  };
+
+  const [startingPortfolio, setStartingPortfolio] = useState(() =>
+    getInitialValue("startingPortfolio", 740000)
+  );
+  const [netJobIncome, setNetJobIncome] = useState(() =>
+    getInitialValue("netJobIncome", 128771)
+  );
+  const [monthlyInvestment, setMonthlyInvestment] = useState(() =>
+    getInitialValue("monthlyInvestment", 8000)
+  );
+  const [rentalIncome, setRentalIncome] = useState(() =>
+    getInitialValue("rentalIncome", 133400)
+  );
+  const [spendingNeed, setSpendingNeed] = useState(() =>
+    getInitialValue("spendingNeed", 130000)
+  );
+  const [initialAge, setInitialAge] = useState(() =>
+    getInitialValue("initialAge", 36)
+  );
+  const [retirementAge, setRetirementAge] = useState(() =>
+    getInitialValue("retirementAge", 68)
+  );
+  const [maxAge, setMaxAge] = useState(() => getInitialValue("maxAge", 92));
+  const [inflationRate, setInflationRate] = useState(() =>
+    getInitialValue("inflationRate", 0.03)
+  );
+  const [annualGrowthRate, setAnnualGrowthRate] = useState(() =>
+    getInitialValue("annualGrowthRate", 0.05)
+  );
+  const [charitableGivingEnabled, setCharitableGivingEnabled] = useState(() =>
+    getInitialValue("charitableGivingEnabled", true)
+  );
 
   type DataRow = {
     age: number;
@@ -70,6 +105,28 @@ export default function App() {
   });
 
   useEffect(() => {
+    // Persist values to localStorage on change
+    localStorage.setItem(
+      "startingPortfolio",
+      JSON.stringify(startingPortfolio)
+    );
+    localStorage.setItem("netJobIncome", JSON.stringify(netJobIncome));
+    localStorage.setItem(
+      "monthlyInvestment",
+      JSON.stringify(monthlyInvestment)
+    );
+    localStorage.setItem("rentalIncome", JSON.stringify(rentalIncome));
+    localStorage.setItem("spendingNeed", JSON.stringify(spendingNeed));
+    localStorage.setItem("initialAge", JSON.stringify(initialAge));
+    localStorage.setItem("retirementAge", JSON.stringify(retirementAge));
+    localStorage.setItem("maxAge", JSON.stringify(maxAge));
+    localStorage.setItem("inflationRate", JSON.stringify(inflationRate));
+    localStorage.setItem("annualGrowthRate", JSON.stringify(annualGrowthRate));
+    localStorage.setItem(
+      "charitableGivingEnabled",
+      JSON.stringify(charitableGivingEnabled)
+    );
+
     setData(
       Array.from({ length: maxAge - initialAge }, (_, i) => {
         const age = initialAge + i;
@@ -109,18 +166,13 @@ export default function App() {
     maxAge,
     inflationRate,
     annualGrowthRate,
+    charitableGivingEnabled,
   ]);
 
   // Define a function to calculate the charitable giving for each year based on the new plan
   const calculateCharitableGiving = (age: number) => {
+    if (!charitableGivingEnabled) return 0;
     if (age < initialAge) return 0;
-    // const yearsOfGrowth = age - initialAge;
-    // const yearsOfGrowth =
-    //   age <= retirementAge ? age - initialAge : retirementAge - initialAge;
-    // const growthRate = 1 + 0.04;
-    // return charitableGiving * Math.pow(growthRate, yearsOfGrowth);
-
-    // giving should be 10% of income
     const netJobIncome = calculateNetJobIncome(age);
     const rentalIncome = calculateRentalIncome(age);
     const totalIncome = netJobIncome + rentalIncome;
@@ -314,120 +366,117 @@ export default function App() {
   const Dashboard = () => {
     return (
       <div className="p-4 sm:p-8 bg-slate-50 min-h-screen text-slate-800 font-sans">
-        <h1 className="text-3xl sm:text-4xl font-bold mb-2 text-center text-slate-900">
-          Retirement Projection Dashboard
-        </h1>
-        <p className="text-center text-slate-600 mb-8">
-          A visual breakdown of your financial plan from age {initialAge} to{" "}
-          {maxAge}.
-        </p>
+        <div className="mb-8 space-y-2">
+          <h1 className="text-3xl sm:text-4xl font-bold text-center text-slate-900">
+            Retirement Projection Dashboard
+          </h1>
+          <p className="text-center text-slate-600">
+            A visual breakdown of your financial plan from age {initialAge} to{" "}
+            {maxAge}.
+          </p>
+          <div className="text-xs text-gray-500 text-center">
+            A couple of assumptions are made in this model:
+            <ul>
+              <li>All values are adjusted for inflation.</li>
+              <li>Investment returns are compounded annually.</li>
+              <li>Taxes and fees are not considered.</li>
+              <li>
+                Charitable giving is 10% of income until retirement, then 20% of
+                income.
+              </li>
+              <li>Reduced expenses by 20% after retirement.</li>
+            </ul>
+          </div>
+        </div>
 
-        <div className="flex flex-wrap gap-4 justify-center mb-8">
-          <div>
-            <label className="block text-xs text-gray-600">
-              Starting Portfolio
-            </label>
-            <input
-              type="number"
-              className="border-gray-200 border rounded px-2 py-1 bg-white w-full shadow-md"
+        <div className="flex flex-col mb-8 space-y-4 justify-center items-center">
+          <h6>Starting Values</h6>
+          <div className="flex flex-wrap gap-4 items-center">
+            <DebouncedInput
+              label="Portfolio Value ($)"
               value={startingPortfolio}
-              onChange={(e) => setStartingPortfolio(Number(e.target.value))}
+              onChange={setStartingPortfolio}
+              min={0}
+              step={1000}
             />
-          </div>
-          <div>
-            <label className="block text-xs text-gray-600">
-              Net Job Income
-            </label>
-            <input
-              type="number"
-              className="border-gray-200 border rounded px-2 py-1 bg-white w-full shadow-md"
+            <DebouncedInput
+              label="Annual Net Job Income ($)"
               value={netJobIncome}
-              onChange={(e) => setNetJobIncome(Number(e.target.value))}
+              onChange={setNetJobIncome}
+              min={0}
+              step={1000}
             />
-          </div>
-          <div>
-            <label className="block text-xs text-gray-600">
-              Monthly Investment
-            </label>
-            <input
-              type="number"
-              step="100"
-              className="border-gray-200 border rounded px-2 py-1 bg-white w-full shadow-md"
+            <DebouncedInput
+              label="Portfolio Investment / Mo ($)"
               value={monthlyInvestment}
-              onChange={(e) => setMonthlyInvestment(Number(e.target.value))}
+              onChange={setMonthlyInvestment}
+              min={0}
+              step={100}
             />
-          </div>
-          <div>
-            <label className="block text-xs text-gray-600">Rental Income</label>
-            <input
-              type="number"
-              className="border-gray-200 border rounded px-2 py-1 bg-white w-full shadow-md"
+            <DebouncedInput
+              label="Passive Income ($)"
               value={rentalIncome}
-              onChange={(e) => setRentalIncome(Number(e.target.value))}
+              onChange={setRentalIncome}
+              min={0}
+              step={1000}
             />
-          </div>
-          <div>
-            <label className="block text-xs text-gray-600">Spending Need</label>
-            <input
-              type="number"
-              step="1000"
-              className="border-gray-200 border rounded px-2 py-1 bg-white w-full shadow-md"
+            <DebouncedInput
+              label="Annual Expenses ($)"
               value={spendingNeed}
-              onChange={(e) => setSpendingNeed(Number(e.target.value))}
+              onChange={setSpendingNeed}
+              min={0}
+              step={1000}
             />
-          </div>
-          <div>
-            <label className="block text-xs text-gray-600">Initial Age</label>
-            <input
-              type="number"
-              className="border-gray-200 border rounded px-2 py-1 bg-white w-full shadow-md"
+            <DebouncedInput
+              label="Current Age"
               value={initialAge}
-              onChange={(e) => setInitialAge(Number(e.target.value))}
+              onChange={setInitialAge}
+              min={0}
+              step={1}
             />
-          </div>
-          <div>
-            <label className="block text-xs text-gray-600">
-              Retirement Age
-            </label>
-            <input
-              type="number"
-              className="border-gray-200 border rounded px-2 py-1 bg-white w-full shadow-md"
+            <DebouncedInput
+              label="Target Retirement Age"
               value={retirementAge}
-              onChange={(e) => setRetirementAge(Number(e.target.value))}
+              onChange={setRetirementAge}
+              min={0}
+              step={1}
             />
-          </div>
-          <div>
-            <label className="block text-xs text-gray-600">Max Age</label>
-            <input
-              type="number"
-              className="border-gray-200 border rounded px-2 py-1 bg-white w-full shadow-md"
+            <DebouncedInput
+              label="Max Age"
               value={maxAge}
-              onChange={(e) => setMaxAge(Number(e.target.value))}
+              onChange={setMaxAge}
+              min={0}
+              step={1}
             />
-          </div>
-          <div>
-            <label className="block text-xs text-gray-600">
-              Inflation Rate
-            </label>
-            <input
-              type="number"
-              step="0.01"
-              className="border-gray-200 border rounded px-2 py-1 bg-white w-full shadow-md"
+            <DebouncedInput
+              label="Inflation Rate (%)"
               value={inflationRate}
-              onChange={(e) => setInflationRate(Number(e.target.value))}
+              onChange={setInflationRate}
+              min={0}
+              step={0.01}
             />
-          </div>
-          <div>
-            <label className="block text-xs text-gray-600">
-              Annual Growth Rate
-            </label>
-            <input
-              type="number"
-              step="0.01"
-              className="border-gray-200 border rounded px-2 py-1 bg-white w-full shadow-md"
+            <DebouncedInput
+              label="Annual Growth Rate (%)"
               value={annualGrowthRate}
-              onChange={(e) => setAnnualGrowthRate(Number(e.target.value))}
+              onChange={setAnnualGrowthRate}
+              min={0}
+              step={0.01}
             />
+            <div className="flex items-center h-full">
+              <label
+                className="text-xs text-gray-600 mr-2"
+                htmlFor="toggle-charitable-giving"
+              >
+                Charitable Giving
+              </label>
+              <input
+                id="toggle-charitable-giving"
+                type="checkbox"
+                checked={charitableGivingEnabled}
+                onChange={(e) => setCharitableGivingEnabled(e.target.checked)}
+                className="accent-indigo-500 w-4 h-4"
+              />
+            </div>
           </div>
         </div>
 
