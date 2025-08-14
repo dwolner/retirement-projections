@@ -596,7 +596,7 @@ export default function App() {
           <div className={`grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12`}>
             {/* Portfolio Growth Chart */}
             <Card className="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-6">
-              <h3 className="text-lg font-semibold text-center mb-4">
+              <h3 className="text-lg font-semibold text-center">
                 Portfolio Growth
               </h3>
               <ResponsiveContainer width="100%" height={300}>
@@ -637,7 +637,7 @@ export default function App() {
 
             {/* Surplus/Deficit Chart */}
             <Card className="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-6">
-              <h3 className="text-lg font-semibold text-center mb-4">
+              <h3 className="text-lg font-semibold text-center">
                 Annual Surplus / Deficit
               </h3>
               <ResponsiveContainer width="100%" height={300}>
@@ -676,7 +676,7 @@ export default function App() {
 
           {/* Data Table Section */}
           <Card className="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-6">
-            <div className="flex justify-center items-center space-x-2 mb-4">
+            <div className="flex justify-center items-center space-x-2">
               <h3 className="text-lg font-semibold text-center">
                 Detailed Financial Table
               </h3>

@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import React, { useEffect } from "react";
 import { ChevronLeft, ChevronRight, Sun, Moon } from "lucide-react";
 import { useForm, type SubmitHandler } from "react-hook-form";
@@ -152,7 +153,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const inputsConfig = [
     {
       name: "startingPortfolio",
-      label: "Current Portfolio Value ($)",
+      label: "CurrentPortfolio Value ($)",
       min: 0,
       max: 10000000,
       step: 1000,
