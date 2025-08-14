@@ -429,6 +429,23 @@ export default function App() {
     );
   };
 
+  const Helper = ({ children }: { children: React.ReactNode }) => {
+    return (
+      <Tooltip>
+        <TooltipTrigger>
+          <Button variant="ghost" size="icon">
+            <CircleQuestionMark className="h-4 w-4" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent className="max-w-sm shadow-lg dark:bg-slate-800 bg-slate-100">
+          <div className="text-center p-2 dark:text-gray-200 text-gray-900">
+            {children}
+          </div>
+        </TooltipContent>
+      </Tooltip>
+    );
+  };
+
   // Dashboard component
   const Dashboard = () => {
     return (
@@ -484,41 +501,32 @@ export default function App() {
             <h1 className="text-3xl sm:text-4xl font-bold text-center text-slate-900 dark:text-slate-100">
               Retirement Projection Dashboard
             </h1>
-            <p className="flex items-center justify-center text-slate-600 dark:text-slate-300">
-              A visual breakdown of your financial plan from age {initialAge} to{" "}
-              {maxAge}.
-              <Tooltip>
-                <TooltipTrigger>
-                  <Button variant="ghost" size="icon">
-                    <CircleQuestionMark className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent className="shadow-lg dark:bg-slate-800 bg-slate-100 dark:text-gray-200 text-gray-900">
-                  <div className="text-center p-6">
-                    <p className="text-sm">
-                      A couple of assumptions are made in this model:
-                    </p>
-                    <ol className="text-xs">
-                      <li>All values are adjusted for inflation.</li>
-                      <li>Investment returns are compounded annually.</li>
-                      <li>Taxes and fees are not considered.</li>
-                      <li>Reduced expenses by 20% after retirement.</li>
-                      <li>
-                        No more portfolio contributions after retirement age.
-                      </li>
-                      <li>
-                        Charitable giving is 10% of income until retirement,
-                        then 20% of income.
-                      </li>
-                      <li>
-                        College costs are evenly distributed across the college
-                        years for all kids.
-                      </li>
-                    </ol>
-                  </div>
-                </TooltipContent>
-              </Tooltip>
-            </p>
+            <div className="flex items-center justify-center text-slate-600 dark:text-slate-300 space-x-2">
+              <p>
+                A visual breakdown of your financial plan from age {initialAge}{" "}
+                to {maxAge}.
+              </p>
+              <Helper>
+                <p className="text-xs font-semibold">
+                  A couple of assumptions are made in this model:
+                </p>
+                <ol className="text-xs">
+                  <li>All values are adjusted for inflation.</li>
+                  <li>Investment returns are compounded annually.</li>
+                  <li>Taxes and fees are not considered.</li>
+                  <li>Reduced expenses by 20% after retirement.</li>
+                  <li>No more portfolio contributions after retirement age.</li>
+                  <li>
+                    Charitable giving is 10% of income until retirement, then
+                    20% of income.
+                  </li>
+                  <li>
+                    College costs are evenly distributed across the college
+                    years for all kids.
+                  </li>
+                </ol>
+              </Helper>
+            </div>
           </div>
 
           {/* Summary Cards */}
@@ -527,7 +535,20 @@ export default function App() {
           >
             <Card className="bg-white dark:bg-slate-800 border-0 border-l-4 border-indigo-500">
               <CardHeader>
-                <CardTitle>Lifetime Surplus (31 years)</CardTitle>
+                <CardTitle className="flex items-center space-x-2">
+                  <h6>Lifetime Surplus (31 years)</h6>
+                  <Helper>
+                    <>
+                      <p className="text-xs">
+                        In an ideal world, this would be 0 because you limited
+                        your spending to your income and you utilized all of
+                        your surplus. However, this is not a perfect world so
+                        you may want some surplus or be ok with planning some
+                        deficit.
+                      </p>
+                    </>
+                  </Helper>
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <p

@@ -152,7 +152,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const inputsConfig = [
     {
       name: "startingPortfolio",
-      label: "Portfolio Value ($)",
+      label: "Current Portfolio Value ($)",
       min: 0,
       max: 10000000,
       step: 1000,
