@@ -71,6 +71,24 @@ export default function App() {
     getInitialValue("charitableGivingEnabled", true)
   );
 
+  // College cost controls
+  const [collegeCostsEnabled, setCollegeCostsEnabled] = useState(() =>
+    getInitialValue("collegeCostsEnabled", true)
+  );
+  const [numKids, setNumKids] = useState(() => getInitialValue("numKids", 2));
+  const [collegeCost, setCollegeCost] = useState(() =>
+    getInitialValue("collegeCost", 50000)
+  );
+  const [collegeStartAge, setCollegeStartAge] = useState(() =>
+    getInitialValue("collegeStartAge", 52)
+  );
+  const [collegeEndAge, setCollegeEndAge] = useState(() =>
+    getInitialValue("collegeEndAge", 55)
+  );
+  const [collegeDuration, setCollegeDuration] = useState(() =>
+    getInitialValue("collegeDuration", 4)
+  );
+
   type DataRow = {
     age: number;
     startingPortfolio: number;
@@ -126,6 +144,14 @@ export default function App() {
       "charitableGivingEnabled",
       JSON.stringify(charitableGivingEnabled)
     );
+    localStorage.setItem(
+      "collegeCostsEnabled",
+      JSON.stringify(collegeCostsEnabled)
+    );
+    localStorage.setItem("collegeCost", JSON.stringify(collegeCost));
+    localStorage.setItem("collegeStartAge", JSON.stringify(collegeStartAge));
+    localStorage.setItem("collegeEndAge", JSON.stringify(collegeEndAge));
+    localStorage.setItem("collegeDuration", JSON.stringify(collegeDuration));
 
     setData(
       Array.from({ length: maxAge - initialAge }, (_, i) => {
@@ -167,6 +193,11 @@ export default function App() {
     inflationRate,
     annualGrowthRate,
     charitableGivingEnabled,
+    collegeCostsEnabled,
+    collegeCost,
+    collegeStartAge,
+    collegeEndAge,
+    collegeDuration,
   ]);
 
   // Define a function to calculate the charitable giving for each year based on the new plan
@@ -212,15 +243,26 @@ export default function App() {
       newSpendingNeed *= 0.8; // Reduce spending need by 20% after retirement
     }
 
-    // Adjust spending need for college costs
-    // 1st kid goes to college at age 52, second kid goes to college at 55
-    // add college costs to spending need
-    const collegeCost = 50000; // Assume $50,000 per year for college
-    if (age > 51 && age < 55) {
-      newSpendingNeed += collegeCost;
-    }
-    if (age > 54 && age < 58) {
-      newSpendingNeed += collegeCost;
+    if (collegeCostsEnabled) {
+      // Calculate the total number of college-years for all kids
+      const start = Math.min(collegeStartAge, collegeEndAge);
+      const end = Math.max(collegeStartAge, collegeEndAge);
+      const collegeYearsSet = new Set<number>();
+      for (let kid = 0; kid < numKids; kid++) {
+        const kidStart = collegeStartAge + kid;
+        for (let yr = 0; yr < collegeDuration; yr++) {
+          const year = kidStart + yr;
+          if (year >= start && year < end) {
+            collegeYearsSet.add(year);
+          }
+        }
+      }
+      const yearsWithCollege = Array.from(collegeYearsSet);
+      const evenCollegeCost =
+        (numKids * collegeCost * collegeDuration) / yearsWithCollege.length;
+      if (yearsWithCollege.includes(age)) {
+        newSpendingNeed += evenCollegeCost;
+      }
     }
     return newSpendingNeed;
   };
@@ -385,6 +427,11 @@ export default function App() {
                 income.
               </li>
               <li>Reduced expenses by 20% after retirement.</li>
+              <li>
+                College costs are evenly distributed across the college years
+                for all kids.
+              </li>
+              <li>No more portfolio contributions after retirement age.</li>
             </ul>
           </div>
         </div>
@@ -427,6 +474,8 @@ export default function App() {
               min={0}
               step={1000}
             />
+          </div>
+          <div className="flex flex-wrap gap-4 items-center">
             <DebouncedInput
               label="Current Age"
               value={initialAge}
@@ -462,6 +511,8 @@ export default function App() {
               min={0}
               step={0.01}
             />
+          </div>
+          <div className="flex flex-wrap gap-4 items-center">
             <div className="flex items-center h-full">
               <label
                 className="text-xs text-gray-600 mr-2"
@@ -477,6 +528,60 @@ export default function App() {
                 className="accent-indigo-500 w-4 h-4"
               />
             </div>
+            <div className="flex items-center h-full">
+              <label
+                className="text-xs text-gray-600 mr-2"
+                htmlFor="toggle-college-costs"
+              >
+                College Costs
+              </label>
+              <input
+                id="toggle-college-costs"
+                type="checkbox"
+                checked={collegeCostsEnabled}
+                onChange={(e) => setCollegeCostsEnabled(e.target.checked)}
+                className="accent-indigo-500 w-4 h-4"
+              />
+            </div>
+            {collegeCostsEnabled && (
+              <>
+                <DebouncedInput
+                  label="# of Kids (for college)"
+                  value={numKids}
+                  onChange={setNumKids}
+                  min={0}
+                  step={1}
+                />
+                <DebouncedInput
+                  label="College Cost per Kid/Year ($)"
+                  value={collegeCost}
+                  onChange={setCollegeCost}
+                  min={0}
+                  step={1000}
+                />
+                <DebouncedInput
+                  label="College Start Age (oldest)"
+                  value={collegeStartAge}
+                  onChange={setCollegeStartAge}
+                  min={0}
+                  step={1}
+                />
+                <DebouncedInput
+                  label="College End Age (youngest)"
+                  value={collegeEndAge}
+                  onChange={setCollegeEndAge}
+                  min={collegeStartAge}
+                  step={1}
+                />
+                <DebouncedInput
+                  label="College Duration (years)"
+                  value={collegeDuration}
+                  onChange={setCollegeDuration}
+                  min={1}
+                  step={1}
+                />
+              </>
+            )}
           </div>
         </div>
 

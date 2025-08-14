@@ -14,7 +14,7 @@ export const DebouncedInput: React.FC<DebouncedInputProps> = ({
   label,
   value,
   onChange,
-  debounce = 500,
+  debounce = 750,
   min,
   max,
   step = 1,
