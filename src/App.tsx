@@ -74,8 +74,8 @@ export default function App() {
   const [monthlyInvestment, setMonthlyInvestment] = useState(() =>
     getInitialValue("monthlyInvestment", 0)
   );
-  const [rentalIncome, setRentalIncome] = useState(() =>
-    getInitialValue("rentalIncome", 0)
+  const [passiveIncome, setPassiveIncome] = useState(() =>
+    getInitialValue("passiveIncome", 0)
   );
   const [spendingNeed, setSpendingNeed] = useState(() =>
     getInitialValue("spendingNeed", 0)
@@ -116,11 +116,12 @@ export default function App() {
   );
 
   type DataRow = {
+    year: number;
     age: number;
     startingPortfolio: number;
     netJobIncome: number;
     portfolioGrowth: number;
-    rentalIncome: number;
+    passiveIncome: number;
     totalIncome: number;
     spendingNeed: number;
     charitableGiving: number;
@@ -129,8 +130,11 @@ export default function App() {
   };
   const [data, setData] = useState<DataRow[]>([]);
 
-  const totalSurplus = data.reduce((acc, curr) => acc + curr.surplusDeficit, 0);
-  const totalCharitableGiving = data.reduce(
+  const lifetimeSurplus = data.reduce(
+    (acc, curr) => acc + curr.surplusDeficit,
+    0
+  );
+  const lifetimeCharitableGiving = data.reduce(
     (acc, curr) => acc + curr.charitableGiving,
     0
   );
@@ -153,7 +157,7 @@ export default function App() {
     setLocalStorageValue("startingPortfolio", startingPortfolio);
     setLocalStorageValue("netJobIncome", netJobIncome);
     setLocalStorageValue("monthlyInvestment", monthlyInvestment);
-    setLocalStorageValue("rentalIncome", rentalIncome);
+    setLocalStorageValue("passiveIncome", passiveIncome);
     setLocalStorageValue("spendingNeed", spendingNeed);
     setLocalStorageValue("initialAge", initialAge);
     setLocalStorageValue("retirementAge", retirementAge);
@@ -170,14 +174,16 @@ export default function App() {
     setData(
       Array.from({ length: maxAge - initialAge }, (_, i) => {
         const age = initialAge + i;
-        return { age, ...calculateSurplusDeficit(age) };
+        const currentYear = new Date().getFullYear();
+        const year = currentYear + i;
+        return { year, age, ...calculateSurplusDeficit(age) };
       })
     );
   }, [
     startingPortfolio,
     netJobIncome,
     monthlyInvestment,
-    rentalIncome,
+    passiveIncome,
     spendingNeed,
     initialAge,
     retirementAge,
@@ -197,8 +203,8 @@ export default function App() {
     if (!charitableGivingEnabled) return 0;
     if (age < initialAge) return 0;
     const netJobIncome = calculateNetJobIncome(age);
-    const rentalIncome = calculateRentalIncome(age);
-    const totalIncome = netJobIncome + rentalIncome;
+    const passiveIncome = calculatePassiveIncome(age);
+    const totalIncome = netJobIncome + passiveIncome;
     const percentage = age < retirementAge ? 0.1 : 0.2;
     return totalIncome * percentage;
   };
@@ -216,12 +222,12 @@ export default function App() {
     return initialIncome * Math.pow(growthRate, yearsOfGrowth);
   };
 
-  const calculateRentalIncome = (age: number) => {
-    // Rental income increases by 3% annually
+  const calculatePassiveIncome = (age: number) => {
+    // Passive income increases by 3% annually
     const growthRate = 1 + inflationRate;
-    if (age < initialAge) return rentalIncome;
+    if (age < initialAge) return passiveIncome;
     const yearsOfGrowth = age - initialAge;
-    return rentalIncome * Math.pow(growthRate, yearsOfGrowth);
+    return passiveIncome * Math.pow(growthRate, yearsOfGrowth);
   };
 
   const calculateSpendingNeed = (age: number) => {
@@ -300,8 +306,8 @@ export default function App() {
       <span
         className={
           total < 0
-            ? `${darkMode ? "text-rose-400" : "text-rose-600"}`
-            : `${darkMode ? "text-green-400" : "text-green-600"}`
+            ? `dark:text-rose-400 text-rose-600`
+            : `dark:text-green-400 text-green-600`
         }
       >
         {formatCurrency(total)}
@@ -312,14 +318,14 @@ export default function App() {
   const calculateSurplusDeficit = (age: number) => {
     // Calculate total income and expenses
     const netJobIncome = calculateNetJobIncome(age);
-    const rentalIncome = calculateRentalIncome(age);
+    const passiveIncome = calculatePassiveIncome(age);
     const charitableGiving = calculateCharitableGiving(age);
     const spendingNeed = calculateSpendingNeed(age);
     const startingPortfolio = calculatePortfolioGrowth(age);
     const portfolioGrowth = startingPortfolio * annualGrowthRate;
 
     // Total income
-    const totalIncome = netJobIncome + rentalIncome;
+    const totalIncome = netJobIncome + passiveIncome;
     const investmentExpenses = calculateMonthlyInvestment(age) * 12;
     // Total expenses
     const totalExpenses = spendingNeed + charitableGiving + investmentExpenses;
@@ -330,7 +336,7 @@ export default function App() {
       startingPortfolio,
       netJobIncome,
       portfolioGrowth,
-      rentalIncome,
+      passiveIncome,
       totalIncome,
       investmentExpenses,
       spendingNeed,
@@ -344,11 +350,12 @@ export default function App() {
     const csvRows = [];
     type DataRowKey = keyof DataRow;
     const headers: DataRowKey[] = [
+      "year",
       "age",
       "startingPortfolio",
       "portfolioGrowth",
       "netJobIncome",
-      "rentalIncome",
+      "passiveIncome",
       "totalIncome",
       "charitableGiving",
       "spendingNeed",
@@ -405,54 +412,27 @@ export default function App() {
   // Dashboard component
   const Dashboard = () => {
     return (
-      <div
-        className={
-          `p-4 sm:p-8 min-h-screen font-sans ` +
-          (darkMode
-            ? "bg-slate-900 text-slate-100"
-            : "bg-slate-50 text-slate-800")
-        }
-      >
+      <div className="p-4 sm:p-8 min-h-screen font-sans bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100">
         <div className="flex justify-end mb-4">
           <button
-            className={
-              `px-3 py-1 rounded border transition ` +
-              (darkMode
-                ? "bg-slate-700 text-slate-100 border-slate-600 hover:bg-slate-800"
-                : "bg-slate-200 text-slate-800 border-slate-300 hover:bg-slate-300")
-            }
+            className="px-3 py-1 rounded border transition bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-100 border-slate-300 dark:border-slate-600 hover:bg-slate-300 dark:hover:bg-slate-800"
             onClick={() => setDarkMode((d) => !d)}
             aria-label="Toggle dark mode"
           >
-            {darkMode ? "☀️ Light Mode" : "🌙 Dark Mode"}
+            <span className="hidden dark:inline">☀️ Light Mode</span>
+            <span className="inline dark:hidden">🌙 Dark Mode</span>
           </button>
         </div>
-        <div className={darkMode ? "mb-8 space-y-2" : "mb-8 space-y-2"}>
-          <h1
-            className={
-              `text-3xl sm:text-4xl font-bold text-center ` +
-              (darkMode ? "text-slate-100" : "text-slate-900")
-            }
-          >
+
+        <div className={"mb-8 space-y-2"}>
+          <h1 className="text-3xl sm:text-4xl font-bold text-center text-slate-900 dark:text-slate-100">
             Retirement Projection Dashboard
           </h1>
-          <p
-            className={
-              darkMode
-                ? "text-center text-slate-300"
-                : "text-center text-slate-600"
-            }
-          >
+          <p className="text-center text-slate-600 dark:text-slate-300">
             A visual breakdown of your financial plan from age {initialAge} to{" "}
             {maxAge}.
           </p>
-          <div
-            className={
-              darkMode
-                ? "text-xs text-gray-400 text-center"
-                : "text-xs text-gray-500 text-center"
-            }
-          >
+          <div className="text-xs text-gray-500 dark:text-gray-400 text-center">
             A couple of assumptions are made in this model:
             <ul>
               <li>All values are adjusted for inflation.</li>
@@ -472,28 +452,15 @@ export default function App() {
           </div>
         </div>
 
-        <div
-          className={
-            darkMode
-              ? "flex flex-col mb-8 space-y-4 justify-center items-center"
-              : "flex flex-col mb-8 space-y-4 justify-center items-center"
-          }
-        >
+        <div className="flex flex-col mb-8 space-y-4 justify-center items-center">
           <h6>Starting Values</h6>
-          <div
-            className={
-              darkMode
-                ? "flex flex-wrap gap-4 items-center"
-                : "flex flex-wrap gap-4 items-center"
-            }
-          >
+          <div className="flex flex-wrap gap-4 items-center justify-center">
             <DebouncedInput
               label="Portfolio Value ($)"
               value={startingPortfolio}
               onChange={setStartingPortfolio}
               min={0}
               step={1000}
-              darkMode={darkMode}
             />
             <DebouncedInput
               label="Annual Net Job Income ($)"
@@ -501,7 +468,6 @@ export default function App() {
               onChange={setNetJobIncome}
               min={0}
               step={1000}
-              darkMode={darkMode}
             />
             <DebouncedInput
               label="Portfolio Investment / Mo ($)"
@@ -509,15 +475,13 @@ export default function App() {
               onChange={setMonthlyInvestment}
               min={0}
               step={100}
-              darkMode={darkMode}
             />
             <DebouncedInput
               label="Passive Income ($)"
-              value={rentalIncome}
-              onChange={setRentalIncome}
+              value={passiveIncome}
+              onChange={setPassiveIncome}
               min={0}
               step={1000}
-              darkMode={darkMode}
             />
             <DebouncedInput
               label="Annual Expenses ($)"
@@ -525,23 +489,15 @@ export default function App() {
               onChange={setSpendingNeed}
               min={0}
               step={1000}
-              darkMode={darkMode}
             />
           </div>
-          <div
-            className={
-              darkMode
-                ? "flex flex-wrap gap-4 items-center"
-                : "flex flex-wrap gap-4 items-center"
-            }
-          >
+          <div className="flex flex-wrap gap-4 items-center justify-center">
             <DebouncedInput
               label="Current Age"
               value={initialAge}
               onChange={setInitialAge}
               min={0}
               step={1}
-              darkMode={darkMode}
             />
             <DebouncedInput
               label="Target Retirement Age"
@@ -549,7 +505,6 @@ export default function App() {
               onChange={setRetirementAge}
               min={0}
               step={1}
-              darkMode={darkMode}
             />
             <DebouncedInput
               label="Max Age"
@@ -557,7 +512,6 @@ export default function App() {
               onChange={setMaxAge}
               min={0}
               step={1}
-              darkMode={darkMode}
             />
             <DebouncedInput
               label="Inflation Rate (%)"
@@ -565,7 +519,6 @@ export default function App() {
               onChange={setInflationRate}
               min={0}
               step={0.01}
-              darkMode={darkMode}
             />
             <DebouncedInput
               label="Annual Growth Rate (%)"
@@ -573,16 +526,9 @@ export default function App() {
               onChange={setAnnualGrowthRate}
               min={0}
               step={0.01}
-              darkMode={darkMode}
             />
           </div>
-          <div
-            className={
-              darkMode
-                ? "flex flex-wrap gap-4 items-center"
-                : "flex flex-wrap gap-4 items-center"
-            }
-          >
+          <div className="flex flex-wrap gap-4 items-center justify-center">
             <div className="flex items-center h-full">
               <label
                 className="text-xs text-gray-600 mr-2"
@@ -621,7 +567,6 @@ export default function App() {
                   onChange={setNumKids}
                   min={0}
                   step={1}
-                  darkMode={darkMode}
                 />
                 <DebouncedInput
                   label="College Cost per Kid/Year ($)"
@@ -629,7 +574,6 @@ export default function App() {
                   onChange={setCollegeCost}
                   min={0}
                   step={1000}
-                  darkMode={darkMode}
                 />
                 <DebouncedInput
                   label="College Start Age (oldest)"
@@ -637,7 +581,6 @@ export default function App() {
                   onChange={setCollegeStartAge}
                   min={0}
                   step={1}
-                  darkMode={darkMode}
                 />
                 <DebouncedInput
                   label="College End Age (youngest)"
@@ -645,7 +588,6 @@ export default function App() {
                   onChange={setCollegeEndAge}
                   min={collegeStartAge}
                   step={1}
-                  darkMode={darkMode}
                 />
                 <DebouncedInput
                   label="College Duration (years)"
@@ -653,7 +595,6 @@ export default function App() {
                   onChange={setCollegeDuration}
                   min={1}
                   step={1}
-                  darkMode={darkMode}
                 />
               </>
             )}
@@ -662,98 +603,58 @@ export default function App() {
 
         {/* Summary Cards */}
         <div
-          className={
-            `grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12 ` +
-            (darkMode ? "" : "")
-          }
+          className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12`}
         >
-          <Card
-            darkMode={darkMode}
-            borderClassName="border-l-4 border-indigo-500"
-          >
+          <Card borderClassName="border-l-4 border-indigo-500">
             <h3
-              className={`text-lg font-semibold mb-2 ${
-                darkMode ? "text-slate-200" : "text-slate-600"
-              }`}
+              className={`text-lg font-semibold mb-2 dark:text-slate-200 text-slate-600`}
             >
-              Total Surplus (31 years)
+              Lifetime Surplus (31 years)
             </h3>
             <p
-              className={`text-3xl font-bold ${
-                darkMode ? "text-green-400" : "text-green-600"
-              }`}
+              className={`text-3xl font-bold dark:text-green-400 text-green-600`}
             >
-              {formatCurrency(totalSurplus)}
+              {formatCurrency(lifetimeSurplus)}
             </p>
           </Card>
-          <Card
-            darkMode={darkMode}
-            borderClassName="border-l-4 border-purple-500"
-          >
+          <Card borderClassName="border-l-4 border-teal-500">
             <h3
-              className={`text-lg font-semibold mb-2 ${
-                darkMode ? "text-slate-200" : "text-slate-600"
-              }`}
-            >
-              Final Portfolio (Age 65)
-            </h3>
-            <p
-              className={`text-3xl font-bold ${
-                darkMode ? "text-slate-100" : "text-slate-800"
-              }`}
-            >
-              {formatCurrency(finalPortfolio)}
-            </p>
-          </Card>
-          <Card
-            darkMode={darkMode}
-            borderClassName="border-l-4 border-teal-500"
-          >
-            <h3
-              className={`text-lg font-semibold mb-2 ${
-                darkMode ? "text-slate-200" : "text-slate-600"
-              }`}
+              className={`text-lg font-semibold mb-2 dark:text-slate-200 text-slate-600`}
             >
               Average Annual Surplus
             </h3>
             <p
-              className={`text-3xl font-bold ${
-                darkMode ? "text-green-400" : "text-green-600"
-              }`}
+              className={`text-3xl font-bold dark:text-green-400 text-green-600`}
             >
-              {formatCurrency(totalSurplus / (maxAge - initialAge))}
+              {formatCurrency(lifetimeSurplus / (maxAge - initialAge))}
             </p>
           </Card>
-          <Card
-            darkMode={darkMode}
-            borderClassName="border-l-4 border-rose-500"
-          >
+          <Card borderClassName="border-l-4 border-purple-500">
             <h3
-              className={`text-lg font-semibold mb-2 ${
-                darkMode ? "text-slate-200" : "text-slate-600"
-              }`}
+              className={`text-lg font-semibold mb-2 dark:text-slate-200 text-slate-600`}
             >
-              Total Charitable Giving
+              Final Portfolio (Age {maxAge})
             </h3>
-            <p
-              className={`text-3xl font-bold ${
-                darkMode ? "text-rose-400" : "text-rose-600"
-              }`}
+            <p className="text-3xl font-bold text-slate-800 dark:text-slate-100">
+              {formatCurrency(finalPortfolio)}
+            </p>
+          </Card>
+          <Card borderClassName="border-l-4 border-rose-500">
+            <h3
+              className={`text-lg font-semibold mb-2 dark:text-slate-200 text-slate-600`}
             >
-              {formatCurrency(totalCharitableGiving)}
+              Lifetime Charitable Giving
+            </h3>
+            <p className="text-3xl font-bold dark:text-rose-400 text-rose-600">
+              {formatCurrency(lifetimeCharitableGiving)}
             </p>
           </Card>
         </div>
 
         {/* Charts Section */}
-        <div
-          className={
-            `grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12 ` +
-            (darkMode ? "" : "")
-          }
-        >
+        <div className={`grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12`}>
           {/* Portfolio Growth Chart */}
-          <Card darkMode={darkMode}>
+          <Card>
             <h3 className="text-lg font-semibold text-center mb-4">
               Portfolio Growth
             </h3>
@@ -769,6 +670,16 @@ export default function App() {
                 />
                 <Tooltip
                   formatter={(value) => formatCurrency(value as number)}
+                  contentStyle={
+                    darkMode
+                      ? {
+                          backgroundColor: "#1e293b", // slate-800
+                          border: "1px solid #334155", // slate-700
+                          color: "#f1f5f9", // slate-100
+                        }
+                      : undefined
+                  }
+                  labelStyle={darkMode ? { color: "#f1f5f9" } : undefined}
                 />
                 <Legend />
                 <Line
@@ -782,7 +693,7 @@ export default function App() {
           </Card>
 
           {/* Surplus/Deficit Chart */}
-          <Card darkMode={darkMode}>
+          <Card>
             <h3 className="text-lg font-semibold text-center mb-4">
               Annual Surplus / Deficit
             </h3>
@@ -798,6 +709,16 @@ export default function App() {
                 />
                 <Tooltip
                   formatter={(value) => formatCurrency(value as number)}
+                  contentStyle={
+                    darkMode
+                      ? {
+                          backgroundColor: "#1e293b", // slate-800
+                          border: "1px solid #334155", // slate-700
+                          color: "#f1f5f9", // slate-100
+                        }
+                      : undefined
+                  }
+                  labelStyle={darkMode ? { color: "#f1f5f9" } : undefined}
                 />
                 <Legend />
                 <Bar
@@ -811,7 +732,7 @@ export default function App() {
         </div>
 
         {/* Data Table Section */}
-        <Card darkMode={darkMode} className="overflow-x-auto">
+        <Card>
           <button
             onClick={exportToCSV}
             className="mb-4 px-4 py-2 bg-blue-600 text-white rounded-md"
@@ -821,186 +742,169 @@ export default function App() {
           <h3 className="text-lg font-semibold text-center mb-4">
             Detailed Financial Table
           </h3>
-          {/* Data-driven table columns/rows */}
-          {(() => {
-            type Column = {
-              label: string;
-              key: keyof DataRow;
-              className: (
-                darkMode: boolean,
-                row: DataRow,
-                index: number
-              ) => string;
-              headerClass: string;
-              sortable: boolean;
-              render?: (row: DataRow, index: number) => React.ReactNode;
-            };
+          <div className="overflow-x-auto">
+            {/* Data-driven table columns/rows */}
+            {(() => {
+              type Column = {
+                label: string;
+                key: keyof DataRow;
+                className: (row: DataRow, index: number) => string;
+                headerClass: string;
+                sortable: boolean;
+                render?: (row: DataRow, index: number) => React.ReactNode;
+              };
 
-            // Helper for standard currency columns
-            const standardCurrencyColumn = (
-              label: string,
-              key: keyof DataRow,
-              colorClass?: string
-            ): Column => ({
-              label,
-              key,
-              className: (darkMode) =>
-                `px-6 py-4 whitespace-nowrap text-sm ${
-                  colorClass
-                    ? darkMode
-                      ? colorClass.replace("text-", "text-")
-                      : colorClass.replace("text-", "text-")
-                    : darkMode
-                    ? "text-slate-100"
-                    : "text-gray-900"
-                }`,
-              headerClass:
-                "px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100",
-              sortable: true,
-              render: (row) => formatCurrency(row[key]),
-            });
-
-            const columns: Column[] = [
-              {
-                label: "Age",
-                key: "age",
-                className: (darkMode) =>
-                  `px-6 py-4 whitespace-nowrap text-sm font-medium ${
-                    darkMode ? "text-slate-100" : "text-gray-900"
-                  }`,
-                headerClass:
-                  "px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider",
-                sortable: false,
-              },
-              {
-                label: "Starting Portfolio",
-                key: "startingPortfolio",
-                className: (darkMode) =>
-                  `px-6 py-4 whitespace-nowrap text-sm font-medium ${
-                    darkMode ? "text-gray-300" : "text-gray-500"
+              // Helper for standard currency columns
+              const standardCurrencyColumn = (
+                label: string,
+                key: keyof DataRow,
+                colorClass?: string
+              ): Column => ({
+                label,
+                key,
+                className: () =>
+                  `px-6 py-4 whitespace-nowrap text-sm ${
+                    colorClass
+                      ? colorClass.replace("text-", "dark:text-")
+                      : "dark:text-slate-100 text-slate-900"
                   }`,
                 headerClass:
                   "px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100",
                 sortable: true,
-                render: (row, index) => {
-                  const portfolioDiff =
-                    row.startingPortfolio -
-                    (data[index - 1]?.startingPortfolio ?? 0);
-                  return (
-                    <>
-                      {formatCurrency(row.startingPortfolio)}{" "}
-                      {portfolioDiff ? (
-                        <span
-                          className={
-                            darkMode
-                              ? "text-green-400 font-semibold"
-                              : "text-green-600 font-semibold"
-                          }
-                        >
-                          ({formatCurrency(portfolioDiff)})
-                        </span>
-                      ) : null}
-                    </>
-                  );
+                render: (row) => formatCurrency(row[key]),
+              });
+
+              const columns: Column[] = [
+                {
+                  label: "Year",
+                  key: "year",
+                  className: () =>
+                    `px-6 py-4 whitespace-nowrap text-sm font-medium dark:text-slate-100 text-gray-900`,
+                  headerClass:
+                    "px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100",
+                  sortable: true,
+                  render: (row) => row.year,
                 },
-              },
-              standardCurrencyColumn("Portfolio Growth", "portfolioGrowth"),
-              standardCurrencyColumn("Net Job Income", "netJobIncome"),
-              standardCurrencyColumn("Rental Income", "rentalIncome"),
-              standardCurrencyColumn("Total Income", "totalIncome"),
-              standardCurrencyColumn(
-                "Charitable Giving",
-                "charitableGiving",
-                "text-rose-400 font-semibold"
-              ),
-              standardCurrencyColumn("Spending Need", "spendingNeed"),
-              standardCurrencyColumn(
-                "Investment Expenses",
-                "investmentExpenses"
-              ),
-              {
-                label: "Surplus/Deficit",
-                key: "surplusDeficit",
-                className: (darkMode, row) =>
-                  `px-6 py-4 whitespace-nowrap text-sm font-semibold ` +
-                  (row.surplusDeficit < 0
-                    ? darkMode
-                      ? "text-rose-400"
-                      : "text-rose-600"
-                    : darkMode
-                    ? "text-green-400"
-                    : "text-green-600"),
-                headerClass:
-                  "px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100",
-                sortable: true,
-                render: (row) => (
-                  <>
-                    {formatCurrency(row.surplusDeficit)} (
-                    {cummulativeSurplusDeficit(row.age)})
-                  </>
+                {
+                  label: "Age",
+                  key: "age",
+                  className: () =>
+                    `px-6 py-4 whitespace-nowrap text-sm font-medium dark:text-slate-100 text-gray-900`,
+                  headerClass:
+                    "px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider",
+                  sortable: false,
+                },
+                {
+                  label: "Starting Portfolio",
+                  key: "startingPortfolio",
+                  className: () =>
+                    `px-6 py-4 whitespace-nowrap text-sm font-medium dark:text-gray-300 text-gray-500`,
+                  headerClass:
+                    "px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100",
+                  sortable: true,
+                  render: (row, index) => {
+                    const portfolioDiff =
+                      row.startingPortfolio -
+                      (data[index - 1]?.startingPortfolio ?? 0);
+                    return (
+                      <>
+                        {formatCurrency(row.startingPortfolio)}{" "}
+                        {portfolioDiff ? (
+                          <span
+                            className={
+                              "dark:text-green-400 text-green-600 font-semibold"
+                            }
+                          >
+                            ({formatCurrency(portfolioDiff)})
+                          </span>
+                        ) : null}
+                      </>
+                    );
+                  },
+                },
+                standardCurrencyColumn("Portfolio Growth", "portfolioGrowth"),
+                standardCurrencyColumn("Net Job Income", "netJobIncome"),
+                standardCurrencyColumn("Passive Income", "passiveIncome"),
+                standardCurrencyColumn("Total Income", "totalIncome"),
+                standardCurrencyColumn(
+                  "Charitable Giving",
+                  "charitableGiving",
+                  "dark:text-rose-400 text-rose-600 font-semibold"
                 ),
-              },
-            ];
-            return (
-              <table
-                className={
-                  `min-w-full divide-y ` +
-                  (darkMode ? "divide-gray-700" : "divide-gray-200")
-                }
-              >
-                <thead className={darkMode ? "bg-slate-900" : "bg-gray-50"}>
-                  <tr className={darkMode ? "text-slate-100" : undefined}>
-                    {columns.map((col) => (
-                      <th
-                        key={col.key}
-                        scope="col"
-                        className={col.headerClass}
-                        onClick={
-                          col.sortable ? () => sortData(col.key) : undefined
-                        }
-                        style={{ cursor: col.sortable ? "pointer" : undefined }}
-                      >
-                        <div className="flex items-center">
-                          {col.label} {col.sortable && getSortIcon(col.key)}
-                        </div>
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody
-                  className={
-                    darkMode
-                      ? "bg-slate-900 divide-gray-700"
-                      : "bg-white divide-gray-200"
-                  }
+                standardCurrencyColumn("Spending Need", "spendingNeed"),
+                standardCurrencyColumn(
+                  "Investment Expenses",
+                  "investmentExpenses"
+                ),
+                {
+                  label: "Surplus/Deficit",
+                  key: "surplusDeficit",
+                  className: (row) =>
+                    `px-6 py-4 whitespace-nowrap text-sm font-semibold ` +
+                    (row.surplusDeficit < 0
+                      ? "dark:text-rose-400 text-rose-600"
+                      : "dark:text-green-400 text-green-600"),
+                  headerClass:
+                    "px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100",
+                  sortable: true,
+                  render: (row) => (
+                    <>
+                      {formatCurrency(row.surplusDeficit)} (
+                      {cummulativeSurplusDeficit(row.age)})
+                    </>
+                  ),
+                },
+              ];
+              return (
+                <table
+                  className={`min-w-full divide-y dark:divide-gray-700 divide-gray-200`}
                 >
-                  {data.map((row, index) => (
-                    <tr
-                      key={row.age}
-                      className={
-                        darkMode
-                          ? index % 2 === 0
-                            ? "bg-slate-900"
-                            : "bg-slate-800"
-                          : index % 2 === 0
-                          ? "bg-white"
-                          : "bg-gray-50"
-                      }
-                    >
+                  <thead className="dark:bg-slate-900 bg-gray-50">
+                    <tr className={"dark:text-slate-100 text-slate-900"}>
                       {columns.map((col) => (
-                        <td
+                        <th
                           key={col.key}
-                          className={col.className(darkMode, row, index)}
+                          scope="col"
+                          className={col.headerClass}
+                          onClick={
+                            col.sortable ? () => sortData(col.key) : undefined
+                          }
+                          style={{
+                            cursor: col.sortable ? "pointer" : undefined,
+                          }}
                         >
-                          {col.render ? col.render(row, index) : row[col.key]}
-                        </td>
+                          <div className="flex items-center">
+                            {col.label} {col.sortable && getSortIcon(col.key)}
+                          </div>
+                        </th>
                       ))}
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            );
-          })()}
+                  </thead>
+                  <tbody className="dark:bg-slate-900 bg-white divide-gray-200">
+                    {data.map((row, index) => (
+                      <tr
+                        key={row.age}
+                        className={
+                          index % 2 === 0
+                            ? "dark:bg-slate-900 bg-white"
+                            : "dark:bg-slate-800 bg-gray-50"
+                        }
+                      >
+                        {columns.map((col) => (
+                          <td
+                            key={col.key}
+                            className={col.className(row, index)}
+                          >
+                            {col.render ? col.render(row, index) : row[col.key]}
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              );
+            })()}
+          </div>
         </Card>
       </div>
     );

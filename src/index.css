@@ -1,5 +1,19 @@
 @import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
 
+:root {
+  --tooltip-bg: white;
+  --tooltip-border: 1px solid #e5e7eb;
+  --tooltip-color: #1f2937;
+  --tooltip-label-color: #1f2937;
+}
+
+.dark {
+  --tooltip-bg: #1e293b; /* slate-800 */
+  --tooltip-border: 1px solid #334155; /* slate-700 */
+  --tooltip-color: #f1f5f9; /* slate-100 */
+  --tooltip-label-color: #f1f5f9; /* slate-100 */
+}
 
 html {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;

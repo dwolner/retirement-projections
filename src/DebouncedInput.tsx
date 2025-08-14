@@ -8,7 +8,6 @@ interface DebouncedInputProps {
   min?: number;
   max?: number;
   step?: number;
-  darkMode?: boolean;
 }
 
 export const DebouncedInput: React.FC<DebouncedInputProps> = ({
@@ -19,7 +18,6 @@ export const DebouncedInput: React.FC<DebouncedInputProps> = ({
   min,
   max,
   step = 1,
-  darkMode = false,
 }) => {
   const [internalValue, setInternalValue] = useState(value);
   const timeout = useRef<number | null>(null);
@@ -46,22 +44,13 @@ export const DebouncedInput: React.FC<DebouncedInputProps> = ({
 
   return (
     <div>
-      <label
-        className={
-          `block text-xs ` + (darkMode ? "text-gray-300" : "text-gray-600")
-        }
-      >
+      <label className={`block text-xs dark:text-gray-300 text-gray-600`}>
         {label}
       </label>
       <input
         ref={inputRef}
         type="number"
-        className={
-          `border rounded px-2 py-1 w-full shadow-md ` +
-          (darkMode
-            ? "border-gray-700 bg-slate-800 text-slate-100 placeholder:text-gray-500"
-            : "border-gray-200 bg-white text-slate-900 placeholder:text-gray-400")
-        }
+        className={`border rounded px-2 py-1 w-full shadow-md dark:border-gray-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-gray-500 border-gray-200 bg-white text-slate-900 placeholder:text-gray-400`}
         value={internalValue}
         min={min}
         max={max}
