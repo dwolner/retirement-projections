@@ -18,6 +18,7 @@ import {
   YAxis,
 } from "recharts";
 // import { Card } from "./Card";
+import { Sidebar } from "@/components/Sidebar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -25,9 +26,13 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Sidebar } from "./components/Sidebar";
+import {
+  type DataRow,
+  type DataRowKey,
+  type Inputs,
+  type SortConfig,
+} from "@/types";
 
-// Helper function to format numbers as currency
 const formatCurrency = (value: number) => {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
@@ -35,6 +40,18 @@ const formatCurrency = (value: number) => {
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(value);
+};
+
+const setLocalStorageValue = <T,>(key: string, value: T) => {
+  localStorage.setItem(key, JSON.stringify(value));
+};
+
+const getInitialValue = <T,>(key: string, defaultValue: T): T => {
+  if (typeof window !== "undefined") {
+    const stored = localStorage.getItem(key);
+    if (stored !== null) return JSON.parse(stored);
+  }
+  return defaultValue;
 };
 
 // Main App component
@@ -50,16 +67,6 @@ export default function App() {
     return false;
   });
 
-  // Sidebar collapsed state with localStorage persistence
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
-    if (typeof window !== "undefined") {
-      const stored = localStorage.getItem("sidebarCollapsed");
-      if (stored !== null) return stored === "true";
-    }
-    return false;
-  });
-
-  // Set html class and persist to localStorage
   useEffect(() => {
     if (darkMode) {
       document.documentElement.classList.add("dark");
@@ -69,107 +76,80 @@ export default function App() {
     localStorage.setItem("darkMode", String(darkMode));
   }, [darkMode]);
 
+  // Sidebar collapsed state with localStorage persistence
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("sidebarCollapsed");
+      if (stored !== null) return stored === "true";
+    }
+    return false;
+  });
+
   // Persist sidebar collapsed state to localStorage
   useEffect(() => {
     setLocalStorageValue("sidebarCollapsed", sidebarCollapsed);
   }, [sidebarCollapsed]);
 
-  const setLocalStorageValue = <T,>(key: string, value: T) => {
-    localStorage.setItem(key, JSON.stringify(value));
-  };
-
-  const getInitialValue = <T,>(key: string, defaultValue: T): T => {
-    if (typeof window !== "undefined") {
-      const stored = localStorage.getItem(key);
-      if (stored !== null) return JSON.parse(stored);
-    }
-    return defaultValue;
-  };
-
-  const [portfolioValue, setPortfolioValue] = useState(
-    getInitialValue("portfolioValue", 0)
-  );
-  const [netJobIncome, setNetJobIncome] = useState(
-    getInitialValue("netJobIncome", 0)
-  );
-  const [monthlyInvestment, setMonthlyInvestment] = useState(
-    getInitialValue("monthlyInvestment", 0)
-  );
-  const [passiveIncome, setPassiveIncome] = useState(
-    getInitialValue("passiveIncome", 0)
-  );
-  const [spendingNeed, setSpendingNeed] = useState(
-    getInitialValue("spendingNeed", 0)
-  );
-  const [initialAge, setInitialAge] = useState(
-    getInitialValue("initialAge", 18)
-  );
-  const [retirementAge, setRetirementAge] = useState(
-    getInitialValue("retirementAge", 67)
-  );
-  const [maxAge, setMaxAge] = useState(getInitialValue("maxAge", 92));
-  const [inflationRate, setInflationRate] = useState(
-    getInitialValue("inflationRate", 0.03)
-  );
-  const [annualGrowthRate, setAnnualGrowthRate] = useState(
-    getInitialValue("annualGrowthRate", 0.05)
-  );
-  const [charitableGivingEnabled, setCharitableGivingEnabled] = useState(
-    getInitialValue("charitableGivingEnabled", true)
-  );
-  const [collegeCostsEnabled, setCollegeCostsEnabled] = useState(
-    getInitialValue("collegeCostsEnabled", false)
-  );
-  const [numKids, setNumKids] = useState(getInitialValue("numKids", 2));
-  const [collegeCost, setCollegeCost] = useState(
-    getInitialValue("collegeCost", 50000)
-  );
-  const [collegeStartAge, setCollegeStartAge] = useState(
-    getInitialValue("collegeStartAge", 0)
-  );
-  const [collegeEndAge, setCollegeEndAge] = useState(
-    getInitialValue("collegeEndAge", 0)
-  );
-  const [collegeDuration, setCollegeDuration] = useState(
-    getInitialValue("collegeDuration", 4)
-  );
-
-  type DataRow = {
-    year: number;
-    age: number;
-    portfolioValue: number;
-    netJobIncome: number;
-    portfolioGrowth: number;
-    passiveIncome: number;
-    totalIncome: number;
-    spendingNeed: number;
-    charitableGiving: number;
-    investmentExpenses: number;
-    surplusDeficit: number;
-  };
-  const [data, setData] = useState<DataRow[]>([]);
-
-  const lifetimeSurplus = data.reduce(
-    (acc, curr) => acc + curr.surplusDeficit,
-    0
-  );
-  const lifetimeCharitableGiving = data.reduce(
-    (acc, curr) => acc + curr.charitableGiving,
-    0
-  );
-  const finalPortfolio = !data.length
-    ? 0
-    : data[data.length - 1].portfolioValue +
-      data[data.length - 1].surplusDeficit;
-
-  type SortConfig = {
-    key: string | null;
-    direction: "ascending" | "descending";
-  };
+  const [tableData, setTableData] = useState<DataRow[]>([]);
   const [sortConfig, setSortConfig] = useState<SortConfig>({
     key: null,
     direction: "ascending",
   });
+
+  const lifetimeSurplus = tableData.reduce(
+    (acc, curr) => acc + curr.surplusDeficit,
+    0
+  );
+  const lifetimeCharitableGiving = tableData.reduce(
+    (acc, curr) => acc + curr.charitableGiving,
+    0
+  );
+  const finalPortfolio = !tableData.length
+    ? 0
+    : tableData[tableData.length - 1].portfolioValue +
+      tableData[tableData.length - 1].surplusDeficit;
+
+  const [formData, setFormData] = useState<Inputs>(() => {
+    return getInitialValue("formData", {
+      portfolioValue: 0,
+      netJobIncome: 0,
+      monthlyInvestment: 0,
+      passiveIncome: 0,
+      spendingNeed: 0,
+      initialAge: 18,
+      retirementAge: 67,
+      maxAge: 92,
+      inflationRate: 0.03,
+      annualGrowthRate: 0.05,
+      charitableGivingEnabled: true,
+      collegeCostsEnabled: false,
+      numKids: 2,
+      collegeCost: 50000,
+      collegeStartAge: 0,
+      collegeEndAge: 0,
+      collegeDuration: 4,
+    });
+  });
+
+  const {
+    portfolioValue,
+    netJobIncome,
+    monthlyInvestment,
+    passiveIncome,
+    spendingNeed,
+    initialAge,
+    retirementAge,
+    maxAge,
+    inflationRate,
+    annualGrowthRate,
+    charitableGivingEnabled,
+    collegeCostsEnabled,
+    numKids,
+    collegeCost,
+    collegeStartAge,
+    collegeEndAge,
+    collegeDuration,
+  } = formData;
 
   // Define a function to calculate the charitable giving for each year based on the new plan
   const calculateCharitableGiving = (age: number) => {
@@ -287,7 +267,7 @@ export default function App() {
     );
   };
 
-  const calculateSurplusDeficit = (age: number) => {
+  const calculateSurplusDeficit = (age: number): DataRow => {
     // Calculate total income and expenses
     const netJobIncome = calculateNetJobIncome(age);
     const passiveIncome = calculatePassiveIncome(age);
@@ -295,16 +275,15 @@ export default function App() {
     const spendingNeed = calculateSpendingNeed(age);
     const portfolioValue = calculatePortfolioGrowth(age);
     const portfolioGrowth = portfolioValue * annualGrowthRate;
-
-    // Total income
     const totalIncome = netJobIncome + passiveIncome;
     const investmentExpenses = calculateMonthlyInvestment(age) * 12;
-    // Total expenses
     const totalExpenses = spendingNeed + charitableGiving + investmentExpenses;
-
-    // Surplus or deficit
     const surplusDeficit = totalIncome - totalExpenses;
+    const currentYear = new Date().getFullYear();
+    const year = currentYear + (age - initialAge);
     return {
+      year,
+      age,
       portfolioValue,
       netJobIncome,
       portfolioGrowth,
@@ -319,55 +298,20 @@ export default function App() {
 
   useEffect(() => {
     // Persist values to localStorage on change
-    setLocalStorageValue("portfolioValue", portfolioValue);
-    setLocalStorageValue("netJobIncome", netJobIncome);
-    setLocalStorageValue("monthlyInvestment", monthlyInvestment);
-    setLocalStorageValue("passiveIncome", passiveIncome);
-    setLocalStorageValue("spendingNeed", spendingNeed);
-    setLocalStorageValue("initialAge", initialAge);
-    setLocalStorageValue("retirementAge", retirementAge);
-    setLocalStorageValue("maxAge", maxAge);
-    setLocalStorageValue("inflationRate", inflationRate);
-    setLocalStorageValue("annualGrowthRate", annualGrowthRate);
-    setLocalStorageValue("charitableGivingEnabled", charitableGivingEnabled);
-    setLocalStorageValue("collegeCostsEnabled", collegeCostsEnabled);
-    setLocalStorageValue("collegeCost", collegeCost);
-    setLocalStorageValue("collegeStartAge", collegeStartAge);
-    setLocalStorageValue("collegeEndAge", collegeEndAge);
-    setLocalStorageValue("collegeDuration", collegeDuration);
-
-    setData(
+    setLocalStorageValue("formData", formData);
+    setTableData(
       Array.from({ length: maxAge - initialAge }, (_, i) => {
         const age = initialAge + i;
-        const currentYear = new Date().getFullYear();
-        const year = currentYear + i;
-        return { year, age, ...calculateSurplusDeficit(age) };
+        return calculateSurplusDeficit(age);
       })
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    portfolioValue,
-    netJobIncome,
-    monthlyInvestment,
-    passiveIncome,
-    spendingNeed,
-    initialAge,
-    retirementAge,
-    maxAge,
-    inflationRate,
-    annualGrowthRate,
-    charitableGivingEnabled,
-    collegeCostsEnabled,
-    collegeCost,
-    collegeStartAge,
-    collegeEndAge,
-    collegeDuration,
-  ]);
+  }, [formData]);
 
   // export tableData to csv
   const exportToCSV = () => {
     const csvRows = [];
-    type DataRowKey = keyof DataRow;
+
     const headers: DataRowKey[] = [
       "year",
       "age",
@@ -382,7 +326,7 @@ export default function App() {
       "surplusDeficit",
     ];
     csvRows.push(headers.join(","));
-    for (const row of data) {
+    for (const row of tableData) {
       csvRows.push(
         headers.map((field) => JSON.stringify(row[field])).join(",")
       );
@@ -404,7 +348,7 @@ export default function App() {
     }
     setSortConfig({ key, direction });
 
-    const sortedData = [...data].sort((a, b) => {
+    const sortedData = [...tableData].sort((a, b) => {
       if (a[key] < b[key]) {
         return direction === "ascending" ? -1 : 1;
       }
@@ -413,7 +357,7 @@ export default function App() {
       }
       return 0;
     });
-    setData(sortedData);
+    setTableData(sortedData);
   };
 
   // Function to render sort icons
@@ -432,9 +376,7 @@ export default function App() {
     return (
       <Tooltip>
         <TooltipTrigger>
-          <Button variant="ghost" size="icon">
-            <CircleQuestionMark className="h-4 w-4" />
-          </Button>
+          <CircleQuestionMark className="h-4 w-4" />
         </TooltipTrigger>
         <TooltipContent className="max-w-sm shadow-lg">
           <div className="text-center p-2">{children}</div>
@@ -448,44 +390,12 @@ export default function App() {
     return (
       <div className="min-h-screen font-sans bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100">
         <Sidebar
-          portfolioValue={portfolioValue}
-          setPortfolioValue={setPortfolioValue}
-          netJobIncome={netJobIncome}
-          setNetJobIncome={setNetJobIncome}
-          monthlyInvestment={monthlyInvestment}
-          setMonthlyInvestment={setMonthlyInvestment}
-          passiveIncome={passiveIncome}
-          setPassiveIncome={setPassiveIncome}
-          spendingNeed={spendingNeed}
-          setSpendingNeed={setSpendingNeed}
-          initialAge={initialAge}
-          setInitialAge={setInitialAge}
-          retirementAge={retirementAge}
-          setRetirementAge={setRetirementAge}
-          maxAge={maxAge}
-          setMaxAge={setMaxAge}
-          inflationRate={inflationRate}
-          setInflationRate={setInflationRate}
-          annualGrowthRate={annualGrowthRate}
-          setAnnualGrowthRate={setAnnualGrowthRate}
-          charitableGivingEnabled={charitableGivingEnabled}
-          setCharitableGivingEnabled={setCharitableGivingEnabled}
-          collegeCostsEnabled={collegeCostsEnabled}
-          setCollegeCostsEnabled={setCollegeCostsEnabled}
-          numKids={numKids}
-          setNumKids={setNumKids}
-          collegeCost={collegeCost}
-          setCollegeCost={setCollegeCost}
-          collegeStartAge={collegeStartAge}
-          setCollegeStartAge={setCollegeStartAge}
-          collegeEndAge={collegeEndAge}
-          setCollegeEndAge={setCollegeEndAge}
-          collegeDuration={collegeDuration}
-          setCollegeDuration={setCollegeDuration}
           darkMode={darkMode}
           setDarkMode={setDarkMode}
           sidebarCollapsed={sidebarCollapsed}
           setSidebarCollapsed={setSidebarCollapsed}
+          formData={formData}
+          setFormData={setFormData}
         />
 
         {/* Main content area with padding to account for sidebar */}
@@ -615,7 +525,7 @@ export default function App() {
               </h3>
               <ResponsiveContainer width="100%" height={300}>
                 <LineChart
-                  data={data}
+                  data={tableData}
                   margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
                 >
                   <CartesianGrid strokeDasharray="3 3" />
@@ -656,7 +566,7 @@ export default function App() {
               </h3>
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart
-                  data={data.map((row) => ({
+                  data={tableData.map((row) => ({
                     ...row,
                     totalSpending:
                       -1 *
@@ -783,7 +693,7 @@ export default function App() {
                     render: (row, index) => {
                       const portfolioDiff =
                         row.portfolioValue -
-                        (data[index - 1]?.portfolioValue ?? 0);
+                        (tableData[index - 1]?.portfolioValue ?? 0);
                       return (
                         <>
                           {formatCurrency(row.portfolioValue)}{" "}
@@ -804,15 +714,12 @@ export default function App() {
                   standardCurrencyColumn("Net Job Income", "netJobIncome"),
                   standardCurrencyColumn("Passive Income", "passiveIncome"),
                   standardCurrencyColumn("Total Income", "totalIncome"),
+                  standardCurrencyColumn("Expenses", "spendingNeed"),
+                  standardCurrencyColumn("Investments", "investmentExpenses"),
                   standardCurrencyColumn(
-                    "Charitable Giving",
+                    "Giving",
                     "charitableGiving",
                     "dark:text-rose-400 text-rose-600 font-semibold"
-                  ),
-                  standardCurrencyColumn("Spending Need", "spendingNeed"),
-                  standardCurrencyColumn(
-                    "Investment Expenses",
-                    "investmentExpenses"
                   ),
                   {
                     label: "Surplus/Deficit",
@@ -859,7 +766,7 @@ export default function App() {
                       </tr>
                     </thead>
                     <tbody className="dark:bg-slate-900 bg-white divide-gray-200">
-                      {data.map((row, index) => (
+                      {tableData.map((row, index) => (
                         <tr
                           key={row.age}
                           className={
