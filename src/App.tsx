@@ -12,20 +12,20 @@ import {
   Legend,
   Line,
   LineChart,
-  ResponsiveContainer,
   Tooltip as RechartsTooltip,
+  ResponsiveContainer,
   XAxis,
   YAxis,
 } from "recharts";
 // import { Card } from "./Card";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Sidebar } from "./components/Sidebar";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Button } from "@/components/ui/button";
+import { Sidebar } from "./components/Sidebar";
 
 // Helper function to format numbers as currency
 const formatCurrency = (value: number) => {
@@ -86,8 +86,8 @@ export default function App() {
     return defaultValue;
   };
 
-  const [startingPortfolio, setStartingPortfolio] = useState(
-    getInitialValue("startingPortfolio", 0)
+  const [portfolioValue, setPortfolioValue] = useState(
+    getInitialValue("portfolioValue", 0)
   );
   const [netJobIncome, setNetJobIncome] = useState(
     getInitialValue("netJobIncome", 0)
@@ -137,7 +137,7 @@ export default function App() {
   type DataRow = {
     year: number;
     age: number;
-    startingPortfolio: number;
+    portfolioValue: number;
     netJobIncome: number;
     portfolioGrowth: number;
     passiveIncome: number;
@@ -159,7 +159,7 @@ export default function App() {
   );
   const finalPortfolio = !data.length
     ? 0
-    : data[data.length - 1].startingPortfolio +
+    : data[data.length - 1].portfolioValue +
       data[data.length - 1].surplusDeficit;
 
   type SortConfig = {
@@ -254,20 +254,19 @@ export default function App() {
   };
 
   const calculatePortfolioGrowth = (age: number) => {
-    const initialPortfolio = startingPortfolio;
     const years = age - initialAge;
 
-    let portfolioValue = initialPortfolio;
+    let newPortfolioValue = portfolioValue;
     for (let i = 0; i < years; i++) {
       if (initialAge + i < retirementAge) {
-        portfolioValue += calculateMonthlyInvestment(initialAge + i) * 12;
+        newPortfolioValue += calculateMonthlyInvestment(initialAge + i) * 12;
       } else {
         // const annualDistribution = calculateSpendingNeed(initialAge + i);
         // portfolioValue -= annualDistribution;
       }
-      portfolioValue *= 1 + annualGrowthRate;
+      newPortfolioValue *= 1 + annualGrowthRate;
     }
-    return portfolioValue;
+    return newPortfolioValue;
   };
 
   const cummulativeSurplusDeficit = (age: number) => {
@@ -294,8 +293,8 @@ export default function App() {
     const passiveIncome = calculatePassiveIncome(age);
     const charitableGiving = calculateCharitableGiving(age);
     const spendingNeed = calculateSpendingNeed(age);
-    const startingPortfolio = calculatePortfolioGrowth(age);
-    const portfolioGrowth = startingPortfolio * annualGrowthRate;
+    const portfolioValue = calculatePortfolioGrowth(age);
+    const portfolioGrowth = portfolioValue * annualGrowthRate;
 
     // Total income
     const totalIncome = netJobIncome + passiveIncome;
@@ -306,7 +305,7 @@ export default function App() {
     // Surplus or deficit
     const surplusDeficit = totalIncome - totalExpenses;
     return {
-      startingPortfolio,
+      portfolioValue,
       netJobIncome,
       portfolioGrowth,
       passiveIncome,
@@ -320,7 +319,7 @@ export default function App() {
 
   useEffect(() => {
     // Persist values to localStorage on change
-    setLocalStorageValue("startingPortfolio", startingPortfolio);
+    setLocalStorageValue("portfolioValue", portfolioValue);
     setLocalStorageValue("netJobIncome", netJobIncome);
     setLocalStorageValue("monthlyInvestment", monthlyInvestment);
     setLocalStorageValue("passiveIncome", passiveIncome);
@@ -347,7 +346,7 @@ export default function App() {
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
-    startingPortfolio,
+    portfolioValue,
     netJobIncome,
     monthlyInvestment,
     passiveIncome,
@@ -372,7 +371,7 @@ export default function App() {
     const headers: DataRowKey[] = [
       "year",
       "age",
-      "startingPortfolio",
+      "portfolioValue",
       "portfolioGrowth",
       "netJobIncome",
       "passiveIncome",
@@ -437,10 +436,8 @@ export default function App() {
             <CircleQuestionMark className="h-4 w-4" />
           </Button>
         </TooltipTrigger>
-        <TooltipContent className="max-w-sm shadow-lg dark:bg-slate-800 bg-slate-100">
-          <div className="text-center p-2 dark:text-gray-200 text-gray-900">
-            {children}
-          </div>
+        <TooltipContent className="max-w-sm shadow-lg">
+          <div className="text-center p-2">{children}</div>
         </TooltipContent>
       </Tooltip>
     );
@@ -451,8 +448,8 @@ export default function App() {
     return (
       <div className="min-h-screen font-sans bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100">
         <Sidebar
-          startingPortfolio={startingPortfolio}
-          setStartingPortfolio={setStartingPortfolio}
+          portfolioValue={portfolioValue}
+          setPortfolioValue={setPortfolioValue}
           netJobIncome={netJobIncome}
           setNetJobIncome={setNetJobIncome}
           monthlyInvestment={monthlyInvestment}
@@ -534,21 +531,20 @@ export default function App() {
             className={`grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-6 mb-12`}
           >
             <Card className="bg-white dark:bg-slate-800 border-0 border-l-4 border-indigo-500">
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
+              <CardHeader className="flex items-center space-x-2">
+                <CardTitle>
                   <h6>Lifetime Surplus (31 years)</h6>
-                  <Helper>
-                    <>
-                      <p className="text-xs">
-                        In an ideal world, this would be 0 because you limited
-                        your spending to your income and you utilized all of
-                        your surplus. However, this is not a perfect world so
-                        you may want some surplus or be ok with planning some
-                        deficit.
-                      </p>
-                    </>
-                  </Helper>
                 </CardTitle>
+                <Helper>
+                  <>
+                    <p className="text-xs">
+                      In an ideal world, this would be 0 because you limited
+                      your spending to your income and you utilized all of your
+                      surplus. However, this is not a perfect world so you may
+                      want some surplus or be ok with planning some deficit.
+                    </p>
+                  </>
+                </Helper>
               </CardHeader>
               <CardContent>
                 <p
@@ -559,8 +555,14 @@ export default function App() {
               </CardContent>
             </Card>
             <Card className="bg-white dark:bg-slate-800 border-0 border-l-4 border-teal-500">
-              <CardHeader>
+              <CardHeader className="flex items-center space-x-2">
                 <CardTitle>Average Annual Surplus</CardTitle>
+                <Helper>
+                  <p className="text-xs">
+                    This value represents the average surplus or deficit you
+                    would have each year over your lifetime.
+                  </p>
+                </Helper>
               </CardHeader>
               <CardContent>
                 <p
@@ -571,8 +573,14 @@ export default function App() {
               </CardContent>
             </Card>
             <Card className="bg-white dark:bg-slate-800 border-0 border-l-4 border-purple-500">
-              <CardHeader>
+              <CardHeader className="flex items-center space-x-2">
                 <CardTitle>Final Portfolio (Age {maxAge})</CardTitle>
+                <Helper>
+                  <p className="text-xs">
+                    This value represents the total amount you would have in
+                    your portfolio at the end of your lifetime.
+                  </p>
+                </Helper>
               </CardHeader>
               <CardContent>
                 <p className="text-3xl font-bold text-slate-800 dark:text-slate-100">
@@ -581,8 +589,14 @@ export default function App() {
               </CardContent>
             </Card>
             <Card className="bg-white dark:bg-slate-800 border-0 border-l-4 border-rose-500">
-              <CardHeader>
+              <CardHeader className="flex items-center space-x-2">
                 <CardTitle>Lifetime Charitable Giving</CardTitle>
+                <Helper>
+                  <p className="text-xs">
+                    This value represents the total amount you would have given
+                    to charity over your lifetime.
+                  </p>
+                </Helper>
               </CardHeader>
               <CardContent>
                 <p className="text-3xl font-bold dark:text-rose-400 text-rose-600">
@@ -627,9 +641,9 @@ export default function App() {
                   <Legend />
                   <Line
                     type="monotone"
-                    dataKey="startingPortfolio"
+                    dataKey="portfolioValue"
                     stroke="#8884d8"
-                    name="Starting Portfolio"
+                    name="Portfolio Value"
                   />
                 </LineChart>
               </ResponsiveContainer>
@@ -642,7 +656,14 @@ export default function App() {
               </h3>
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart
-                  data={data}
+                  data={data.map((row) => ({
+                    ...row,
+                    totalSpending:
+                      -1 *
+                      (row.spendingNeed +
+                        row.charitableGiving +
+                        row.investmentExpenses),
+                  }))}
                   margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
                 >
                   <CartesianGrid strokeDasharray="3 3" />
@@ -665,8 +686,18 @@ export default function App() {
                   />
                   <Legend />
                   <Bar
+                    dataKey="totalIncome"
+                    fill="#22c55e"
+                    name="Total Income"
+                  />
+                  <Bar
+                    dataKey="totalSpending"
+                    fill="#ef4444"
+                    name="Total Spending"
+                  />
+                  <Bar
                     dataKey="surplusDeficit"
-                    fill="#10b981"
+                    fill="#6366f1"
                     name="Surplus/Deficit"
                   />
                 </BarChart>
@@ -742,8 +773,8 @@ export default function App() {
                     sortable: false,
                   },
                   {
-                    label: "Starting Portfolio",
-                    key: "startingPortfolio",
+                    label: "Portfolio Value",
+                    key: "portfolioValue",
                     className: () =>
                       `px-6 py-4 whitespace-nowrap text-center text-sm font-medium dark:text-gray-300 text-gray-500`,
                     headerClass:
@@ -751,11 +782,11 @@ export default function App() {
                     sortable: true,
                     render: (row, index) => {
                       const portfolioDiff =
-                        row.startingPortfolio -
-                        (data[index - 1]?.startingPortfolio ?? 0);
+                        row.portfolioValue -
+                        (data[index - 1]?.portfolioValue ?? 0);
                       return (
                         <>
-                          {formatCurrency(row.startingPortfolio)}{" "}
+                          {formatCurrency(row.portfolioValue)}{" "}
                           {portfolioDiff ? (
                             <span
                               className={
